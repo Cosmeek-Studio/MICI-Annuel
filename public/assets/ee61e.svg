@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1061.62" height="745.629" viewBox="0 0 1061.62 745.629" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="page-mici-annuelle__shape-2" opacity="0.5" filter="url(#filter0_f_0_30)" style="mix-blend-mode:hard-light">
+<path d="M933.888 214.819C933.888 437.432 753.424 617.896 530.811 617.896C308.197 617.896 127.733 437.432 127.733 214.819C127.733 -7.79469 308.197 266.643 530.811 266.643C753.424 266.643 933.888 -7.79469 933.888 214.819Z" fill="url(#paint0_radial_0_30)"/>
+</g>
+<defs>
+<filter id="filter0_f_0_30" x="0" y="-8.2016e-07" width="1061.62" height="745.629" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="63.8667" result="effect1_foregroundBlur_0_30"/>
+</filter>
+<radialGradient id="paint0_radial_0_30" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(451.482 255.555) rotate(-48.7806) scale(344.895 344.895)">
+<stop offset="0.326923" stop-color="#FD7D65"/>
+<stop offset="1" stop-color="#FF0000"/>
+</radialGradient>
+</defs>
+</svg>

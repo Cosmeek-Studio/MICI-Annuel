@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1794.25" height="1271.23" viewBox="0 0 1794.25 1271.23" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="slide-cover__shape-2" filter="url(#filter0_f_0_19)" style="mix-blend-mode:hard-light">
+<path d="M92.1277 522.346C213.816 443.945 453.167 315.135 437.062 427.102C416.929 567.061 -34.9297 1133.6 471.063 877.833C977.055 622.061 1561.79 -285.66 1367.62 267.915C1173.46 821.491 750.679 1451.98 1342.57 1054.01C1816.08 735.638 1726.87 617.887 1605.63 587.183" stroke-width="21.1972" stroke-linecap="round" stroke="url(#paint0_linear_0_19)"/>
+</g>
+<defs>
+<filter id="filter0_f_0_19" x="0" y="2.86102e-06" width="1794.25" height="1271.23" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="40.7639" result="effect1_foregroundBlur_0_19"/>
+</filter>
+<linearGradient id="paint0_linear_0_19" x1="351.164" y1="572.874" x2="1396.6" y2="903.184" gradientUnits="userSpaceOnUse">
+<stop offset="0.326923" stop-color="#88E1FA"/>
+<stop offset="1" stop-color="#FD7D65"/>
+</linearGradient>
+</defs>
+</svg>

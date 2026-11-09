@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1299.45" height="950.396" viewBox="0 0 1299.45 950.396" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="page-mici-annuelle__shape-4" filter="url(#filter0_f_0_21)" style="mix-blend-mode:color-burn">
+<path d="M350.705 569.812C268.955 603.023 303.869 392.05 331.545 282.412C261.3 359.052 143.132 569.812 331.545 687.966C482.275 782.488 664.716 648.581 737.096 569.812C774.351 630.486 880.796 715.428 1008.53 569.812C1168.2 387.792 973.402 282.412 890.376 234.512C807.349 186.612 452.892 528.299 350.705 569.812Z" fill="url(#paint0_radial_0_21)"/>
+</g>
+<defs>
+<filter id="filter0_f_0_21" x="8.38743e-07" y="1.9978e-07" width="1299.45" height="950.396" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="114.96" result="effect1_foregroundBlur_0_21"/>
+</filter>
+<radialGradient id="paint0_radial_0_21" cx="0" cy="0" r="1" gradientTransform="matrix(236.699 -157.865 270.194 138.295 567.105 499.987)" gradientUnits="userSpaceOnUse">
+<stop offset="0.326923" stop-color="#88E1FA"/>
+<stop offset="1" stop-color="#4375FF"/>
+</radialGradient>
+</defs>
+</svg>
