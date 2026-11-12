@@ -41,6 +41,7 @@ export const EDITIONS = {
     art: {
       wall: 'editions/2025/wall.webp', tvA: 'editions/2025/tv-a.webp', tvB: 'editions/2025/tv-b.webp',
       deskA: 'editions/2025/desk-a.webp', deskB: 'editions/2025/desk-b.webp', lectern: 'editions/2025/lectern.webp',
+      monitor: 'editions/2025/monitor.webp', // télé au centre des pupitres d'équipe
     },
     trailer: '',
     summary: 'Résumé de l’édition 2025 à renseigner.',
@@ -52,6 +53,7 @@ export const EDITIONS = {
     date: '30 juin 2026', time: '18h30 – 21h00',
     teamA: { label: 'Équipe', tag: '#1.1', color: '#4fb9ea', speakers: speakers(3) },
     teamB: { label: 'Équipe', tag: '#2.2', color: '#f4573b', speakers: speakers(3) },
+    art: { monitor: 'editions/2026/monitor.webp' }, // télé au centre des pupitres d'équipe
     trailer: '', // URL .mp4 ou lien d'intégration YouTube/Vimeo
     summary: 'Diagnostic, suivi, décision thérapeutique : l’intelligence artificielle s’invite dans la prise en charge des MICI. Deux équipes d’experts confrontent leurs arguments en plateau, pendant que les professionnels de santé participent en ligne et adressent leurs questions aux intervenants.',
   },

@@ -353,7 +353,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   /* ---------- Décor « façades imprimées » (édition 2025) ---------- */
   const artTex = {};
   const art = (k) => artTex[k] ||= Object.assign(new THREE.Texture(), { colorSpace: THREE.SRGBColorSpace, anisotropy: maxAniso });
-  function printedDesk(key, action, L, H, plinthW) {
+  function printedDesk(key, action, L, H, plinthW, withMonitor = false) {
     const g = new THREE.Group(), D = 0.7, R = 0.15, t = 0.036, base = 0.12, cy = base + H / 2;
     const inner = (p) => rrPath(p, L - 2 * t, H - 2 * t, R - t * 0.7);
     g.add(shadow(mesh(ringGeo((p) => rrPath(p, L, H, R), inner, D), M.shell, 0, cy, 0)));
@@ -364,11 +364,17 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     g.add(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, 0, base + H + 0.0005, 0));
     g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, base + H + 0.003, 0.02), mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, base + H + 0.012, 0.05));
     register(action, face, mat, key, 0.45);
+    if (withMonitor) { // télé encastrée au centre de la façade
+      const mw = 1.42, mh = 0.8, mz = D / 2 - 0.022;
+      g.add(mesh(new THREE.BoxGeometry(mw + 0.05, mh + 0.05, 0.05), M.bezel, 0, cy, mz + 0.026));
+      const monMat = glass(T.monitor.t), mon = mesh(new THREE.PlaneGeometry(mw, mh), monMat, 0, cy, mz + 0.053); g.add(mon);
+      register(action, mon, monMat, key);
+    }
     g.traverse((o) => { if (o.isMesh && !o.userData.action) register(action, o); });
     return g;
   }
   sets.printed.push(
-    place(printedDesk('deskA', 'teamA', 2.8, 1.01, 2.6), -2.85, 0.9, 1.05), place(printedDesk('deskB', 'teamB', 2.8, 1.01, 2.6), 2.85, 0.9, -1.05),
+    place(printedDesk('deskA', 'teamA', 2.8, 1.01, 2.6, true), -2.85, 0.9, 1.05), place(printedDesk('deskB', 'teamB', 2.8, 1.01, 2.6, true), 2.85, 0.9, -1.05),
     place(printedDesk('lectern', 'summary', 1.44, 1.01, 1.1), 0, -2.35, 0),
     contact(2.8, 0.7, -2.85, 0.9, 1.05, 0.75), contact(2.8, 0.7, 2.85, 0.9, -1.05, 0.75), contact(1.44, 0.7, 0, -2.35, 0, 0.7),
   );

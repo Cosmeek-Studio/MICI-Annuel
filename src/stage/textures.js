@@ -169,6 +169,7 @@ export function paintDeskPanel(c, ed, side) {
 
 /* ---------- Moniteur encastré dans les pupitres ---------- */
 export function paintDeskMonitor(c, ed) {
+  const im = artImage(ed.art?.monitor); if (im) { cover(c, im); return; }
   const x = c.getContext('2d'), W = c.width, H = c.height, u = W / 1024;
   x.fillStyle = '#101114'; x.fillRect(0, 0, W, H);
   x.globalAlpha = 0.5;
