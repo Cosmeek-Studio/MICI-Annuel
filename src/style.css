@@ -143,7 +143,7 @@ h1,h2,h3,p,figure { margin: 0; }
 @keyframes wheel { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(10px); } }
 .hero__hint.is-hidden { opacity: 0; }
 
-.editions { position: absolute; z-index: 5; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 48px; align-items: center; width: min(572px, calc(100% - 24px)); justify-content: space-between; }
+.editions { position: absolute; z-index: 5; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 24px; align-items: center; width: min(760px, calc(100% - 24px)); justify-content: space-between; }
 .editions__line, .editions__progress { position: absolute; left: 0; top: calc(50% - 2px); height: 4px; border-radius: 2px; pointer-events: none; }
 .editions__line { right: 0; background: var(--neutral-50); opacity: .95; }
 /* halo : la ligne se teinte en vert de part et d'autre de l'édition active, puis s'estompe */
@@ -362,7 +362,8 @@ html:not(.js) .reveal { opacity: 1; transform: none; }
   .nav__right .chip:not(:last-child) { display: none; }
   .stage-panel, .stage-panel[data-side="left"] { left: 12px; right: 12px; width: auto; top: auto; bottom: 68px; max-height: 60%; }
   .hotspot { font-size: 11px; padding: 5px 7px; }
-  .chip--edition { font-size: 11px; padding: 6px; }
+  .chip--edition { font-size: 11px; padding: 6px 10px; }
+  .chip--edition .chip__pre { display: none; }
   .editions { gap: 6px; }
   .h-52 br, .h-32 br { display: none; }
   .grid8 { grid-template-columns: minmax(0, 1fr); row-gap: var(--gut); }
