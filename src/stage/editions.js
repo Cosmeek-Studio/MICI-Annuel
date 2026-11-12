@@ -1,5 +1,5 @@
 /* Données par édition : DA des écrans du plateau + contenus des panneaux.
-   Les éditions 2025 et 2026 reprennent la DA réelle du plateau ; 2023 et 2024 sont provisoires.
+   Les éditions 2025 et 2026 reprennent la DA réelle du plateau ; 2022, 2023 et 2024 sont provisoires.
    Les intervenants, résumés et trailers sont des contenus provisoires à remplacer. */
 
 const speakers = (n) => Array.from({ length: n }, (_, i) => ({
@@ -8,6 +8,16 @@ const speakers = (n) => Array.from({ length: n }, (_, i) => ({
 }));
 
 export const EDITIONS = {
+  2022: {
+    year: 2022,
+    theme: 'Thème de l’édition 2022 à renseigner',
+    lectern: ['Édition', '2022'],
+    date: '2022', time: 'En replay',
+    teamA: { label: 'Équipe', tag: '#1', color: '#6fd3a8', speakers: speakers(3) },
+    teamB: { label: 'Équipe', tag: '#2', color: '#ff7aa8', speakers: speakers(3) },
+    trailer: '',
+    summary: 'Résumé de l’édition 2022 à renseigner.',
+  },
   2023: {
     year: 2023,
     theme: 'Le premier débat',
