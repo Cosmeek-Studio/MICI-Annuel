@@ -6,6 +6,7 @@
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
   <title>MICI Challenge — Les idées se rencontrent. Les points de vue se challengent.</title>
   <meta name="description" content="Le rendez-vous des professionnels de santé pour explorer les questions qui animent la prise en charge des MICI." />
+  <script>document.documentElement.classList.add('js');</script>
   <link rel="stylesheet" href="/src/style.css" />
 </head>
 <body>
@@ -15,7 +16,7 @@
     <div class="ticker__inner">
       <div class="ticker__text">
         <span>L’ÉDITION 2026 DU MICI CHALLENGE</span>
-        <span>“L’IA AU COEUR DES DÉBATS”</span>
+        <span class="dim">“L’IA AU COEUR DES DÉBATS”</span>
         <span>SE TIENDRA LE 18 JUILLET</span>
       </div>
       <a class="ticker__link" href="#edition-2026">CONSULTER L’ÉDITION <i>↗</i></a>
@@ -74,11 +75,15 @@
   <main>
     <!-- Qu'est-ce que le MICI Challenge -->
     <section class="intro" id="intro">
-      <img class="intro__title" src="/assets/cc8ca.svg" alt="MICI CHALLENGE" />
-      <div class="intro__body reveal">
-        <span class="pill">QU’EST CE QUE LE MICI CHALLENGE ?</span>
-        <h2 class="h-36 center">Les idées se rencontrent.<br />Les points de vue se challengent.</h2>
-        <p class="body center">Le rendez-vous des professionnels de santé pour explorer les questions qui animent la prise en charge des MICI. Des experts en plateau, des débats en direct et, à chaque édition, un nouvel univers à découvrir.</p>
+      <div class="container intro__top">
+        <img class="intro__title" src="/assets/cc8ca.svg" alt="MICI CHALLENGE" width="1408" height="123" />
+        <div class="intro__body">
+          <div class="stack stack--12 stack--center">
+            <span class="pill">QU’EST CE QUE LE MICI CHALLENGE ?</span>
+            <h2 class="h-32 center">Les idées se rencontrent.<br /> Les points de vue se challengent.</h2>
+          </div>
+          <p class="body center">Le rendez-vous des professionnels de santé pour explorer les questions qui animent la prise en charge des MICI. Des experts en plateau, des débats en direct et, à chaque édition, un nouvel univers à découvrir.</p>
+        </div>
       </div>
       <a class="scroll-line" href="#concept">
         <span></span><b class="chip chip--lime">SCROLLEZ POUR EN APPRENDRE PLUS</b><span></span>
@@ -86,19 +91,22 @@
     </section>
 
     <!-- Le concept -->
-    <section class="concept" id="concept">
-      <div class="container">
-        <div class="concept__head reveal">
-          <div>
-            <span class="pill">Le concept et sa raison d’être</span>
-            <h2 class="h-52">Une question mérite bien plus d’un point de vue.</h2>
+    <section class="concept container" id="concept">
+      <div class="stack stack--12">
+        <span class="pill">Le concept et sa raison d’être</span>
+        <div class="grid8 concept__head">
+          <h2 class="h-52">Une question mérite bien plus d’un point de vue.</h2>
+          <div class="concept__lede prose">
+            <p class="body">Les pratiques évoluent, de nouvelles approches émergent et les questions se multiplient.</p>
+            <p class="body">Pour les explorer, le MICI Challenge fait place à la discussion.</p>
           </div>
-          <p class="body concept__lede">Les pratiques évoluent, de nouvelles approches émergent et les questions se multiplient. Pour les explorer, le MICI Challenge fait place à la discussion.</p>
         </div>
-        <div class="concept__grid">
-          <figure class="media reveal concept__photo"><img src="/assets/85236.webp" alt="Experts réunis sur le plateau" loading="lazy" /></figure>
-          <div class="concept__side reveal">
-            <figure class="media media--sq"><img src="/assets/f1282.webp" alt="" loading="lazy" /></figure>
+      </div>
+      <div class="grid8 concept__grid">
+        <figure class="media reveal concept__photo"><img src="/assets/85236.webp" alt="Experts réunis sur le plateau" loading="lazy" /></figure>
+        <div class="concept__side">
+          <figure class="media media--sq reveal"><img src="/assets/f1282.webp" alt="" loading="lazy" /></figure>
+          <div class="stack stack--12">
             <span class="pill pill--orange">ARGUMENTS &amp; DISCUSSIONS</span>
             <p class="body">Sur un même plateau, des experts français en hépato-gastroentérologie confrontent leurs arguments et mettent leurs expériences en perspective. À distance, les professionnels de santé prennent part aux échanges et adressent leurs questions aux intervenants.</p>
           </div>
@@ -107,120 +115,200 @@
     </section>
 
     <!-- Slide cover : édition 2026 -->
-    <section class="cover container reveal" id="edition-2026">
-      <div class="cover__card">
-        <img class="cover__bg" src="/assets/56ac9.webp" alt="" loading="lazy" />
-        <div class="cover__ring cover__ring--a"></div>
-        <div class="cover__ring cover__ring--b"></div>
-        <div class="cover__panel">
-          <span class="corner corner--tl"></span><span class="corner corner--tr"></span>
-          <span class="corner corner--bl"></span><span class="corner corner--br"></span>
-          <span class="pill pill--coral">L’édition 2026</span>
-          <h2 class="h-36 center">L’IA au coeur des débats. L’édition 2026 du MICI Challenge débute bientôt.</h2>
-          <p class="body center">Ultricies morbi tempus 4 thèmes vitae condimentum. Elementum aliquet enim massa senectus condimentum montes lorem. Elit dis ut non leo lorem sem libero habitant adipiscing. Mauris id egestas ultrices amet elementum. Quis elit at consequat pretium vestibulum consectetur bibendum quis commodo. Lobortis magna vel urna volutpat habitasse aliquet. At.</p>
+    <section class="cover container" id="edition-2026">
+      <div class="cover__card reveal">
+        <div class="cover__bg"><img src="/assets/56ac9.webp" alt="" loading="lazy" /></div>
+        <img class="cover__line" src="/assets/385a6.svg" alt="" />
+        <img class="cover__glow" src="/assets/8d11d.svg" alt="" />
+        <img class="cover__frame" src="/assets/d0bec.svg" alt="" />
+        <div class="cover__content">
+          <div class="stack stack--24 stack--center">
+            <div class="stack stack--12 stack--center">
+              <span class="pill pill--coral">L’édition 2026</span>
+              <h2 class="h-36 center">L’IA au coeur des débats. L’édition 2026 du MICI Challenge débute bientôt.</h2>
+            </div>
+            <div class="cover__text prose">
+              <p class="body center">Ultricies morbi tempus 4 thèmes vitae condimentum. Elementum aliquet enim massa senectus condimentum montes lorem. Elit dis ut non leo lorem sem libero habitant adipiscing. Mauris id egestas ultrices amet elementum.</p>
+              <p class="body center">Quis elit at consequat pretium vestibulum consectetur bibendum quis commodo. Lobortis magna vel urna volutpat habitasse aliquet. At.</p>
+            </div>
+          </div>
           <a class="chip chip--teal" href="#faq">CONSULTER LA PROCHAIN ÉDITION <i>↗</i></a>
         </div>
       </div>
     </section>
 
     <!-- L'expérience du débat -->
-    <section class="experience">
-      <div class="container">
-        <div class="experience__head reveal">
+    <section class="experience container">
+      <div class="stack stack--24 stack--center">
+        <div class="stack stack--12 stack--center">
           <span class="pill">L’expérience du débat</span>
-          <h2 class="h-52 center">Un plateau. Des convictions. Et vous, impliqué dans la discussion.</h2>
-          <p class="body center">Le MICI Challenge se vit en direct. Les arguments se répondent, les questions relancent les échanges et le public contribue à faire avancer la discussion.</p>
+          <h2 class="h-52 center">Un plateau. Des convictions.<br /> Et vous, impliqué dans la discussion.</h2>
         </div>
-        <div class="experience__grid">
-          <article class="xp reveal">
-            <figure class="media"><img src="/assets/ea8da.webp" alt="" loading="lazy" style="object-position:30% 50%" /></figure>
+        <p class="body center experience__lede">Le MICI Challenge se vit en direct. Les arguments se répondent, les questions relancent les échanges et le public contribue à faire avancer la discussion.</p>
+      </div>
+      <div class="experience__grid">
+        <article class="xp">
+          <figure class="media reveal"><img class="crop" src="/assets/ea8da.webp" alt="" loading="lazy" style="width:187.48%;height:100%;left:-7.67%;top:0" /></figure>
+          <div class="stack stack--8">
             <span class="pill pill--mint">Écouter des regards différents</span>
             <p class="body">Des experts réunis autour de questions communes, avec des expériences et des approches à mettre en perspective.</p>
-          </article>
-          <article class="xp xp--mid reveal">
-            <figure class="media media--sq"><img src="/assets/e41a5.webp" alt="" loading="lazy" /></figure>
+          </div>
+        </article>
+        <article class="xp xp--mid">
+          <figure class="media media--sq reveal"><span class="xp__rot"><img src="/assets/e41a5.webp" alt="" loading="lazy" /></span></figure>
+          <div class="stack stack--12">
             <span class="pill pill--mint">Suivre la confrontation des idées</span>
             <p class="body">Des équipes, des échanges rythmés et une mise en scène renouvelée pour donner à chaque débat sa dynamique.</p>
-          </article>
-          <article class="xp reveal">
-            <figure class="media"><img src="/assets/b506a.webp" alt="" loading="lazy" style="object-position:20% 50%" /></figure>
+          </div>
+        </article>
+        <article class="xp">
+          <figure class="media reveal"><img class="crop" src="/assets/b506a.webp" alt="" loading="lazy" style="width:229.66%;height:122.5%;left:-24.75%;top:-16.52%" /></figure>
+          <div class="stack stack--8">
             <span class="pill pill--mint">Prendre part aux échanges</span>
             <p class="body">À distance, posez vos questions aux intervenants et participez aux interactions proposées au fil de l’émission. Chaque édition change les règles du jeu. Le débat reste au centre.</p>
-          </article>
-        </div>
+          </div>
+        </article>
       </div>
     </section>
 
     <!-- L'initiative Celltrion -->
-    <section class="celltrion container reveal" id="celltrion">
-      <figure class="celltrion__visual">
-        <img src="/assets/ce324.webp" alt="" loading="lazy" />
-        <div class="celltrion__logo"><img src="/assets/6ac36.svg" alt="Celltrion Healthcare" /></div>
-      </figure>
-      <div class="celltrion__panel">
-        <span class="pill pill--lime">L’initiative Celltrion</span>
-        <h2 class="h-36">Derrière le rendez-vous, une équipe qui fait place aux échanges.</h2>
-        <p class="body">Le MICI Challenge est organisé par l’équipe médicale de Celltrion Healthcare France. À travers cet événement national non promotionnel, elle réunit des experts français en hépato-gastroentérologie et une audience de professionnels de santé autour de thématiques liées aux MICI.<br /><br />Le rendez-vous associe débats en plateau et interactions à distance, pour permettre aux professionnels de toute la France de prendre part à la discussion.</p>
-        <a class="chip chip--dark" href="#footer">En savoir plus sur Celltrion <i>↗</i></a>
+    <section class="celltrion container" id="celltrion">
+      <div class="grid8">
+        <figure class="celltrion__visual reveal">
+          <img src="/assets/ce324.webp" alt="" loading="lazy" />
+          <div class="celltrion__logo"><span class="celltrion__mark" role="img" aria-label="Celltrion Healthcare"><img src="/assets/6ac36.svg" alt="" /><img src="/assets/acb29.svg" alt="" /></span></div>
+        </figure>
+        <div class="celltrion__panel">
+          <div class="celltrion__inner">
+            <div class="stack stack--24">
+              <div class="stack stack--12">
+                <span class="pill pill--lime">L’initiative Celltrion</span>
+                <h2 class="h-36">Derrière le rendez-vous, une équipe qui fait place aux échanges.</h2>
+              </div>
+              <div class="celltrion__text prose">
+                <p class="body">Le MICI Challenge est organisé par l’équipe médicale de Celltrion Healthcare France. À travers cet événement national non promotionnel, elle réunit des experts français en hépato-gastroentérologie et une audience de professionnels de santé autour de thématiques liées aux MICI.</p>
+                <p class="body">Le rendez-vous associe débats en plateau et interactions à distance, pour permettre aux professionnels de toute la France de prendre part à la discussion.</p>
+              </div>
+            </div>
+            <a class="chip chip--dark" href="#footer">En savoir plus sur Celltrion <i>↗</i></a>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Archives -->
     <section class="archive" id="archive">
-      <div class="archive__filters">
-        <span class="chip-label">Filtres</span>
-        <button class="pill pill--filter is-on" data-filter="edition">PRÉCÉDENTES ÉDITIONS</button>
-        <button class="pill pill--filter is-on" data-filter="speaker">INTERVENANTS</button>
-        <button class="pill pill--filter is-on" data-filter="photo">PHOTOS</button>
+      <div class="archive__filters" role="group" aria-label="Filtrer la galerie">
+        <span class="archive__label">Filtres</span>
+        <div class="archive__pills">
+          <button class="pill pill--filter" data-filter="edition" aria-pressed="false">PRÉCÉDENTES ÉDITIONS</button>
+          <button class="pill pill--filter" data-filter="speaker" aria-pressed="false">INTERVENANTS</button>
+          <button class="pill pill--filter" data-filter="photo" aria-pressed="false">PHOTOS</button>
+        </div>
       </div>
       <div class="archive__grid" id="archiveGrid">
         <div class="col">
           <article class="card" data-type="edition">
-            <figure class="media media--sm mici26"><div class="mici26__pixels"></div><div class="mici26__word"><small>CHALLENGE</small><b>MICI<sup>26</sup></b></div></figure>
-            <h3>Clôture de notre plus grande édition : Retour sur le MICI Challenge 2026.</h3>
-            <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae. Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
+            <figure class="media media--sm thumb26">
+              <img class="thumb26__bg" src="/assets/mici26-cover.webp" alt="" loading="lazy" />
+              <span class="thumb26__logo">
+                <img class="thumb26__mici" src="/assets/65192.svg" alt="MICI26 Challenge" />
+                <img class="thumb26__chal" src="/assets/0c29f.svg" alt="" />
+                <img class="thumb26__s1" src="/assets/0ae6f.svg" alt="" />
+                <img class="thumb26__s2" src="/assets/109f7.svg" alt="" />
+              </span>
+            </figure>
+            <div class="card__txt">
+              <h3>Clôture de notre plus grande édition : Retour sur le MICI Challenge 2026.</h3>
+              <div class="prose">
+                <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae.</p>
+                <p class="body">Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
+              </div>
+            </div>
           </article>
           <article class="card" data-type="speaker">
-            <figure class="media media--tall"><img src="/assets/a7fb2.webp" alt="Pr. Peyrin-Biroulet" loading="lazy" style="object-position:25% 50%" /></figure>
-            <h3>Pr. Peyrin-Biroulet</h3><p class="body">Gastro-entérologue et hépatologue</p><p class="loc">Nancy</p>
+            <figure class="media media--tall"><img class="crop" src="/assets/b506a.webp" alt="Pr. Peyrin-Biroulet" loading="lazy" style="width:415.53%;height:221.65%;left:-138.92%;top:-55.67%" /></figure>
+            <div class="card__txt card__txt--tight">
+              <h3>Pr. Peyrin-Biroulet</h3>
+              <p class="body">Gastro-entérologue et hépatologue</p>
+              <p class="loc">Nancy</p>
+            </div>
           </article>
         </div>
         <div class="col">
           <article class="card" data-type="edition photo">
-            <figure class="media media--sm slider"><img src="/assets/a7fb2.webp" alt="" loading="lazy" /><span class="dots"><i class="bar"></i><i></i><i></i><i></i><i></i></span></figure>
-            <h3>Retour sur l’édition 2025</h3>
-            <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus non gravida libero, vel venenatis justo.</p>
+            <figure class="media media--sq"><img src="/assets/a7fb2.webp" alt="" loading="lazy" /><span class="dots" aria-hidden="true"><i class="bar"></i><i></i><i></i><i></i><i></i></span></figure>
+            <div class="card__txt">
+              <h3>Retour sur l’édition 2025</h3>
+              <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus non gravida libero, vel venenatis justo.</p>
+            </div>
           </article>
           <article class="card" data-type="edition">
-            <figure class="media media--sm"><img src="/assets/c7e6c.webp" alt="" loading="lazy" /></figure>
-            <h3>L’édition sportive du MICI Challenge 2024.</h3>
-            <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae. Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
-            <a class="chip chip--neutral" href="#edition-2026">REVOIR LES MEILLEURS MOMENTS <i>↗</i></a>
+            <figure class="media media--sm thumb24">
+              <img class="thumb24__bg" src="/assets/c7e6c.webp" alt="" loading="lazy" />
+              <img class="thumb24__logo" src="/assets/e5723.svg" alt="MICI Challenge 2024" />
+              <img class="thumb24__ribbons" src="/assets/d5254.webp" alt="" loading="lazy" />
+            </figure>
+            <div class="card__txt card__txt--cta">
+              <div class="card__txt">
+                <h3>L’édition sportive du MICI Challenge 2024.</h3>
+                <div class="prose">
+                  <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae.</p>
+                <p class="body">Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
+                </div>
+              </div>
+              <a class="chip chip--neutral" href="#edition-2026">REVOIR LES MEILLEURS MOMENTS <i>↗</i></a>
+            </div>
           </article>
           <article class="card" data-type="speaker">
-            <figure class="media media--tall"><img src="/assets/88928.webp" alt="Pr. Buisson" loading="lazy" style="object-position:50% 50%" /></figure>
-            <h3>Pr. Buisson</h3><p class="body">Gastro-entérologue</p><p class="loc">Clermont-Ferrand</p>
+            <figure class="media media--tall"><img src="/assets/88928.webp" alt="Pr. Buisson" loading="lazy" /></figure>
+            <div class="card__txt card__txt--tight">
+              <h3>Pr. Buisson</h3>
+              <p class="body">Gastro-entérologue</p>
+              <p class="loc">Clermont-Ferrand</p>
+            </div>
           </article>
         </div>
         <div class="col">
           <article class="card" data-type="speaker">
-            <figure class="media media--tall"><img src="/assets/b506a.webp" alt="Pr. Vuitton" loading="lazy" style="object-position:12% 40%" /></figure>
-            <h3>Pr. Vuitton</h3><p class="body">Gastro-entérologue</p><p class="loc">Besançon</p>
+            <figure class="media media--tall"><img class="crop" src="/assets/b506a.webp" alt="Pr. Vuitton" loading="lazy" style="width:345.98%;height:184.54%;left:-28.26%;top:-42.27%" /></figure>
+            <div class="card__txt card__txt--tight">
+              <h3>Pr. Vuitton</h3>
+              <p class="body">Gastro-entérologue</p>
+              <p class="loc">Besançon</p>
+            </div>
           </article>
           <article class="card" data-type="speaker">
-            <figure class="media media--tall"><img src="/assets/4f599.webp" alt="Pr. Roblin" loading="lazy" /></figure>
-            <h3>Pr. Roblin</h3><p class="body">Gastro-entérologue</p><p class="loc">Saint Etienne</p>
+            <figure class="media media--tall"><img class="fill" src="/assets/4f599.webp" alt="Pr. Roblin" loading="lazy" /></figure>
+            <div class="card__txt card__txt--tight">
+              <h3>Pr. Roblin</h3>
+              <p class="body">Gastro-entérologue</p>
+              <p class="loc">Saint Etienne</p>
+            </div>
           </article>
         </div>
         <div class="col">
           <article class="card" data-type="edition">
-            <figure class="media media--sm bio"><div class="bio__a"></div><div class="bio__b"></div><div class="bio__t"><b>MICI CHALLENGE</b><i>✦</i><b>#BIO BETTER</b></div></figure>
-            <h3>Le lancement de l’initiative “MICI Challenge” en 2022.</h3>
-            <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae. Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
+            <figure class="media media--sm thumb22">
+              <img class="thumb22__a" src="/assets/3af0c.svg" alt="" />
+              <img class="thumb22__b" src="/assets/136b6.svg" alt="" />
+              <span class="thumb22__t"><b>MICI<br />CHALLENGE</b><img src="/assets/cbc1a.svg" alt="" width="19.082" height="21.805" /><b>#BIO<br />BETTER</b></span>
+            </figure>
+            <div class="card__txt">
+              <h3>Le lancement de l’initiative “MICI Challenge” en 2022.</h3>
+              <div class="prose">
+                <p class="body">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent accumsan sem a nibh tincidunt suscipit. Nulla eu accumsan massa. Curabitur gravida ex lorem, id aliquet odio efficitur vitae.</p>
+                <p class="body">Nullam blandit lacus id laoreet pellentesque. Nullam ac enim a sem commodo elementum. Aenean non augue leo. Quisque sodales gravida placerat.</p>
+              </div>
+            </div>
           </article>
           <article class="card" data-type="speaker">
-            <figure class="media media--tall"><img src="/assets/cebe6.webp" alt="Pr. Laharie" loading="lazy" /></figure>
-            <h3>Pr. Laharie</h3><p class="body">Gastro-entérologue</p><p class="loc">Bordeaux</p>
+            <figure class="media media--tall"><img class="fill" src="/assets/cebe6.webp" alt="Pr. Laharie" loading="lazy" /></figure>
+            <div class="card__txt card__txt--tight">
+              <h3>Pr. Laharie</h3>
+              <p class="body">Gastro-entérologue</p>
+              <p class="loc">Bordeaux</p>
+            </div>
           </article>
         </div>
       </div>
@@ -228,71 +316,86 @@
 
     <!-- FAQ + Prochaine édition -->
     <section class="faq-block" id="faq">
-      <div class="container faq">
-        <div class="faq__panel">
-          <span class="pill pill--pink">FOIRE AUX QUESTIONS</span>
-          <div class="acc" id="acc">
-            <div class="acc__item is-open">
-              <button class="acc__q">À qui s’adresse le MICI Challenge ?<i></i></button>
-              <div class="acc__a"><p class="body">Le MICI Challenge est exclusivement réservé aux professionnels de santé. Ses débats portent sur des thématiques liées aux maladies inflammatoires chroniques de l’intestin.</p></div>
-            </div>
-            <div class="acc__item">
-              <button class="acc__q">Comment se déroule l’événement ?<i></i></button>
-              <div class="acc__a"><p class="body">Des experts français en hépato-gastroentérologie débattent en direct sur un plateau, tandis que les professionnels de santé suivent et interagissent à distance.</p></div>
-            </div>
-            <div class="acc__item">
-              <button class="acc__q">Peut-on poser des questions aux experts ?<i></i></button>
-              <div class="acc__a"><p class="body">Oui. À distance, vous pouvez adresser vos questions aux intervenants et participer aux interactions proposées au fil de l’émission.</p></div>
-            </div>
-            <div class="acc__item">
-              <button class="acc__q">Comment connaître la prochaine date ?<i></i></button>
-              <div class="acc__a"><p class="body">La prochaine édition est annoncée sur ce site et par la liste d’envoi : inscrivez-vous ci-dessous pour être averti.</p></div>
-            </div>
-            <div class="acc__item">
-              <button class="acc__q">Recevoir les annonces m’inscrit-il à la prochaine émission ?<i></i></button>
-              <div class="acc__a"><p class="body">Non. La liste d’envoi vous informe du lancement de l’édition ; l’inscription à l’émission reste une démarche distincte.</p></div>
+      <div class="container">
+        <div class="grid8 faq">
+          <div class="faq__panel">
+            <span class="pill pill--pink">FOIRE AUX QUESTIONS</span>
+            <div class="acc" id="acc">
+                <div class="acc__item is-open">
+                  <button class="acc__q" aria-expanded="false"><span>À qui s’adresse le MICI Challenge ?</span><i></i></button>
+                  <div class="acc__a"><p class="body">Le MICI Challenge est exclusivement réservé aux professionnels de santé. Ses débats portent sur des thématiques liées aux maladies inflammatoires chroniques de l’intestin.</p></div>
+                </div>
+                <div class="acc__item">
+                  <button class="acc__q" aria-expanded="false"><span>Comment se déroule l’événement ?</span><i></i></button>
+                  <div class="acc__a"><p class="body">Des experts français en hépato-gastroentérologie débattent en direct sur un plateau, tandis que les professionnels de santé suivent et interagissent à distance.</p></div>
+                </div>
+                <div class="acc__item">
+                  <button class="acc__q" aria-expanded="false"><span>Peut-on poser des questions aux experts ?</span><i></i></button>
+                  <div class="acc__a"><p class="body">Oui. À distance, vous pouvez adresser vos questions aux intervenants et participer aux interactions proposées au fil de l’émission.</p></div>
+                </div>
+                <div class="acc__item">
+                  <button class="acc__q" aria-expanded="false"><span>Comment connaître la prochaine date ?</span><i></i></button>
+                  <div class="acc__a"><p class="body">La prochaine édition est annoncée sur ce site et par la liste d’envoi : inscrivez-vous ci-dessous pour être averti.</p></div>
+                </div>
+                <div class="acc__item">
+                  <button class="acc__q" aria-expanded="false"><span>Recevoir les annonces m’inscrit-il à la prochaine émission ?</span><i></i></button>
+                  <div class="acc__a"><p class="body">Non. La liste d’envoi vous informe du lancement de l’édition ; l’inscription à l’émission reste une démarche distincte.</p></div>
+                </div>
             </div>
           </div>
+          <figure class="media faq__visual reveal"><img src="/assets/f1304.webp" alt="" loading="lazy" /></figure>
         </div>
-        <figure class="media faq__visual"><img src="/assets/f1304.webp" alt="" loading="lazy" /></figure>
       </div>
 
       <div class="container next">
-        <figure class="media next__photo"><img src="/assets/56ac9.webp" alt="" loading="lazy" style="object-position:35% 50%" /></figure>
-        <div class="next__panel">
-          <span class="pill pill--orange">PROCHAINE ÉDITION</span>
-          <h2 class="h-36">Ne manquez pas la prochaine édition du MICI Challenge.</h2>
-          <p class="body">Le MICI Challenge est organisé tous les ans, et la prochaine édition est déjà en cours de préparation. Afin d’être sûr de ne pas la manquer, inscrivez vous à notre liste d’envoi afin d’être averti du lancement du prochain MICI Challenge.</p>
-          <form class="newsletter" id="newsletter" novalidate>
-            <input type="email" id="email" placeholder="Insérez votre adresse mail" aria-label="Adresse mail" required />
-            <button type="submit" class="chip chip--brown">S’INSCRIRE À LA LISTE D’ENVOI</button>
-          </form>
-          <p class="newsletter__msg" id="nlMsg" role="status"></p>
+        <div class="grid8">
+          <figure class="media next__photo reveal"><img src="/assets/a7fb2.webp" alt="" loading="lazy" /></figure>
+          <div class="next__panel">
+            <div class="next__inner">
+              <div class="stack stack--24">
+                <div class="stack stack--12">
+                  <span class="pill pill--orange">PROCHAINE ÉDITION</span>
+                  <h2 class="h-36">Ne manquez pas la prochaine édition du MICI Challenge.</h2>
+                </div>
+                <p class="body">Le MICI Challenge est organisé tous les ans, et la prochaine édition est déjà en cours de préparation. Afin d’être sûr de ne pas la manquer, inscrivez vous à notre liste d’envoi afin d’être averti du lancement du prochain MICI Challenge.</p>
+              </div>
+              <div class="next__form">
+                <form class="newsletter" id="newsletter" novalidate>
+                  <input type="email" id="email" placeholder="Insérez votre adresse mail" aria-label="Adresse mail" required />
+                  <button type="submit" class="chip chip--brown">S’INSCRIRE À LA LISTE D’ENVOI</button>
+                </form>
+                <p class="newsletter__msg" id="nlMsg" role="status"></p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="footer container" id="footer">
+  <footer class="footer" id="footer">
     <div class="footer__card">
       <div class="footer__left">
-        <img class="footer__logo" src="/assets/0954c.svg" alt="Celltrion Healthcare" />
+        <img class="footer__logo" src="/assets/0954c.svg" alt="Celltrion Healthcare" width="191.143" height="48" />
         <div class="footer__addr">
           <b>Celltrion Healthcare France SAS</b>
-          <span>9-15 Rue Rouget De Lisle 92130 Issy Les Moulineaux</span>
-          <span>+33 (0)1 71 25 27 00</span>
+          <p><span>9-15 Rue Rouget De Lisle 92130 Issy Les Moulineaux</span><span>+33 (0)1 71 25 27 00</span></p>
         </div>
       </div>
       <div class="footer__social">
         <span class="pill pill--lime">NOUS SUIVRE</span>
-        <a href="#" aria-label="Facebook"><img src="/assets/d3ed6.svg" alt="" /></a>
-        <a href="#" aria-label="LinkedIn"><img src="/assets/c9e61.svg" alt="" /></a>
+        <div class="footer__icons">
+          <a href="#" aria-label="Facebook"><img src="/assets/d3ed6.svg" alt="" width="32" height="32" /></a>
+          <a href="#" aria-label="LinkedIn"><img src="/assets/c9e61.svg" alt="" width="32" height="32" /></a>
+        </div>
       </div>
     </div>
-    <div class="footer__big"><img src="/assets/ada47.svg" alt="MICI CHALLENGE" /></div>
-    <div class="footer__legal">
-      <div><a href="#">Mentions légales</a><a href="#">Politique de confidentialité</a><a href="#">Politique des cookies</a></div>
-      <span>FR--25-00009</span>
+    <div class="footer__bottom">
+      <div class="footer__big"><img src="/assets/ada47.svg" alt="MICI CHALLENGE" /></div>
+      <div class="footer__legal">
+        <div><a href="#">Mentions légales</a><a href="#">Politique de confidentialité</a><a href="#">Politique des cookies</a></div>
+        <span>FR--25-00009</span>
+      </div>
     </div>
   </footer>
 

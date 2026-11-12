@@ -1,3 +1,4 @@
+import '@fontsource/barlow-condensed/700.css';
 import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
@@ -111,20 +112,65 @@ addEventListener('resize', () => setEdition(year));
 document.fonts?.ready.then(() => setEdition(year));
 setEdition(year);
 
-/* ---------- Filtres d'archives ---------- */
+/* ---------- Galerie : filtres + colonnes rééquilibrées ---------- */
+// Aucun filtre actif : tout est affiché, dans la disposition de la maquette.
+// Un ou plusieurs filtres actifs : seules les cartes correspondantes restent,
+// redistribuées dans les colonnes (la plus courte d'abord) pour ne pas laisser de trous.
+const grid = $('#archiveGrid');
+const cols = $$('.col', grid);
+const cards = $$('.card', grid);
 const filters = $$('.pill--filter');
-function applyFilters() {
-  const on = new Set(filters.filter((f) => f.classList.contains('is-on')).map((f) => f.dataset.filter));
-  $$('#archiveGrid .card').forEach((c) => c.classList.toggle('is-hidden', !c.dataset.type.split(' ').some((t) => on.has(t))));
+cards.forEach((c) => { c._col = cols.indexOf(c.parentElement); c._row = [...c.parentElement.children].indexOf(c); });
+const reading = [...cards].sort((a, b) => a._row - b._row || a._col - b._col);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const colCount = () => getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
+let lastCols = colCount();
+
+function layoutGallery(animate) {
+  const on = filters.filter((f) => f.classList.contains('is-on')).map((f) => f.dataset.filter);
+  const n = Math.min(colCount(), cols.length);
+  const shown = reading.filter((c) => !on.length || c.dataset.type.split(' ').some((t) => on.includes(t)));
+  cards.forEach((c) => { c.classList.toggle('is-hidden', !shown.includes(c)); c.classList.remove('is-entering'); });
+  if (!on.length && n === cols.length) {
+    [...cards].sort((a, b) => a._col - b._col || a._row - b._row).forEach((c) => cols[c._col].appendChild(c));
+  } else {
+    cols.forEach((col) => col.replaceChildren());
+    const gap = parseFloat(getComputedStyle(cols[0]).rowGap) || 0;
+    const h = Array(n).fill(0);
+    shown.forEach((c) => {
+      const i = h.indexOf(Math.min(...h));
+      cols[i].appendChild(c);
+      h[i] += c.offsetHeight + gap;
+    });
+    cards.filter((c) => !shown.includes(c)).forEach((c) => cols[0].appendChild(c));
+  }
+  if (animate && !reduced) {
+    shown.forEach((c, i) => { c.style.setProperty('--d', Math.min(i, 8) * 45 + 'ms'); void c.offsetWidth; c.classList.add('is-entering'); });
+  }
 }
-filters.forEach((f) => f.addEventListener('click', () => { f.classList.toggle('is-on'); applyFilters(); }));
+let switching;
+filters.forEach((f) => f.addEventListener('click', () => {
+  const on = f.classList.toggle('is-on');
+  f.setAttribute('aria-pressed', on);
+  clearTimeout(switching);
+  if (reduced) { layoutGallery(false); return; }
+  grid.classList.add('is-switching');
+  switching = setTimeout(() => { layoutGallery(true); grid.classList.remove('is-switching'); }, 200);
+}));
+addEventListener('resize', () => { const n = colCount(); if (n !== lastCols) { lastCols = n; layoutGallery(false); } });
+if (lastCols !== cols.length) layoutGallery(false);
 
 /* ---------- FAQ ---------- */
-$$('.acc__item').forEach((it) => $('.acc__q', it).addEventListener('click', () => {
-  const open = it.classList.contains('is-open');
-  $$('.acc__item').forEach((o) => o.classList.remove('is-open'));
-  if (!open) it.classList.add('is-open');
-}));
+const items = $$('.acc__item');
+const setOpen = (it, open) => { it.classList.toggle('is-open', open); $('.acc__q', it).setAttribute('aria-expanded', open); };
+items.forEach((it) => {
+  setOpen(it, it.classList.contains('is-open'));
+  $('.acc__q', it).addEventListener('click', () => {
+    const open = it.classList.contains('is-open');
+    items.forEach((o) => setOpen(o, false));
+    if (!open) setOpen(it, true);
+  });
+});
 
 /* ---------- Newsletter ---------- */
 const form = $('#newsletter'), email = $('#email'), msg = $('#nlMsg');
@@ -136,11 +182,52 @@ form.addEventListener('submit', (e) => {
   if (ok) form.reset();
 });
 
-/* ---------- Révélations au scroll + parallaxe cover ---------- */
-const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-in'); io.unobserve(e.target); } }), { threshold: 0.12 });
-$$('.reveal').forEach((el) => io.observe(el));
+/* ---------- Apparitions au scroll ---------- */
+// Titres : découpés en mots, chacun glisse derrière un masque. Le reste du texte monte en fondu.
+function splitWords(el) {
+  let i = 0;
+  const walk = (node) => {
+    [...node.childNodes].forEach((ch) => {
+      if (ch.nodeType === 1) { walk(ch); return; }
+      if (ch.nodeType !== 3 || !ch.textContent.trim()) return;
+      const frag = document.createDocumentFragment();
+      ch.textContent.split(/(\s+)/).forEach((part) => {
+        if (!part) return;
+        if (/^\s+$/.test(part)) { frag.append(' '); return; }
+        const w = document.createElement('span'), inner = document.createElement('span');
+        w.className = 'w';
+        inner.textContent = part;
+        inner.style.setProperty('--i', i++);
+        w.append(inner);
+        frag.append(w);
+      });
+      ch.replaceWith(frag);
+    });
+  };
+  walk(el);
+}
+$$('main h2').forEach((el) => { el.dataset.anim = 'words'; splitWords(el); });
+$$('main .pill:not(.pill--filter), main .body, main .card h3, main .loc, main a.chip, .scroll-line .chip, .newsletter, .archive__filters, .acc__item, .footer__card, .footer__legal')
+  .filter((el) => !el.closest('.acc__a'))
+  .forEach((el) => { el.dataset.anim = 'up'; });
+
+const io = new IntersectionObserver((entries) => {
+  // Les éléments qui entrent ensemble sont décalés dans l'ordre de lecture.
+  const seen = entries.filter((e) => e.isIntersecting)
+    .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top || a.boundingClientRect.left - b.boundingClientRect.left);
+  let i = 0;
+  seen.forEach((e) => {
+    const el = e.target;
+    if (el.dataset.anim) el.style.setProperty('--d', Math.min(i++, 7) * 70 + 'ms');
+    el.classList.add('is-in');
+    io.unobserve(el);
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
+$$('.reveal, [data-anim]').forEach((el) => io.observe(el));
+
+/* ---------- Parallaxe de la carte « édition 2026 » ---------- */
 const coverBg = $('.cover__bg');
 addEventListener('scroll', () => {
   const r = coverBg.parentElement.getBoundingClientRect();
-  if (r.bottom > 0 && r.top < innerHeight) coverBg.style.transform = `translateY(${(r.top / innerHeight) * -30}px)`;
+  if (r.bottom > 0 && r.top < innerHeight) coverBg.style.transform = `translateY(${(r.top / innerHeight) * -24}px)`;
 }, { passive: true });
