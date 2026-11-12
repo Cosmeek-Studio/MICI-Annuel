@@ -122,7 +122,8 @@ h1,h2,h3,p { margin: 0; }
 .editions { position: absolute; z-index: 5; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; gap: 48px; align-items: center; width: min(572px, calc(100% - 24px)); justify-content: space-between; }
 .editions__line, .editions__progress { position: absolute; left: 0; top: 14px; height: 4px; border-radius: 2px; pointer-events: none; }
 .editions__line { right: 0; background: var(--neutral-50); opacity: .95; }
-.editions__progress { width: 36%; background: linear-gradient(90deg, #9ee6ff, var(--green-300)); transition: width .5s cubic-bezier(.3,.7,.2,1); }
+/* halo : la ligne se teinte en vert de part et d'autre de l'édition active, puis s'estompe */
+.editions__progress { --halo: 56px; width: 0; background: linear-gradient(90deg, transparent, var(--green-300) var(--halo), var(--green-300) calc(100% - var(--halo)), transparent); transition: left .5s cubic-bezier(.3,.7,.2,1), width .5s cubic-bezier(.3,.7,.2,1); }
 .chip--edition { position: relative; font-size: 14px; background: var(--neutral-50); white-space: nowrap; }
 .chip--edition.is-active { background: var(--green-300); }
 
