@@ -1,4 +1,3 @@
-import '@fontsource-variable/figtree';
 import '@fontsource/barlow-condensed/700.css';
 import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
