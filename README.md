@@ -15,11 +15,12 @@ npm run build   # production -> dist/
 Reproduction du plateau réel (mur LED, pupitres d'équipe, pupitre central, écrans sur pied, portiques et cadres LED, caméras PTZ), entièrement procédurale en three.js : aucun fichier 3D à charger.
 - La caméra suit légèrement le curseur (pas d'orbite).
 - Éléments cliquables (décor ou étiquettes) : **mur LED** → trailer, **écrans / pupitres d'équipe** → intervenants, **pupitre central** → résumé de l'édition. `Échap` pour fermer.
-- Onglets **EDITION 2023 → 2026** : repeignent tous les écrans et reteintent les LEDs.
+- Onglets **EDITION 2023 → 2026** : le plateau s'éteint, change de décor dans le noir, puis les écrans et les lumières se rallument en cascade.
+- Deux décors : `classic` (2026, pupitres à moniteur encastré, écrans dessinés en code) et `printed` (2025, façades imprimées sur socle, visuels fournis dans `public/assets/editions/<année>/`).
 - Repli automatique sur le rendu statique si WebGL est indisponible.
 
 ### Contenus à renseigner
-`src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé et `trailer` (URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo). Seule l'édition 2026 reprend la DA réelle ; le reste est provisoire.
+`src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé et `trailer` (URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo), plus `set`, `art` (visuels) et `leds` pour le décor. Les éditions 2025 et 2026 reprennent la DA réelle ; 2023 et 2024 sont provisoires.
 
 ## Structure
 - `index.html` : sections (hero, concept, cover 2026, expérience, Celltrion, archives filtrables, FAQ, liste d'envoi, footer)
