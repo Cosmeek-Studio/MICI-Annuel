@@ -4,6 +4,9 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
+import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
 import { loadAssets, makeCanvas, paintWall, paintTeamTV, paintDeskPanel, paintDeskMonitor, paintLectern } from './stage/textures.js';
 
@@ -35,6 +38,36 @@ function panelGeo(path, w, h) {
   return g;
 }
 
+/* Texture de bruit raccordable (grain de matière : rugosité, marbrure, traces) */
+function noiseTex(size, lo, hi, freq, seed, streaks = 0) {
+  const c = makeCanvas(size, size), x = c.getContext('2d'), img = x.createImageData(size, size);
+  const h = (i, j, p) => { let n = ((i % p + p) % p) * 374761393 + ((j % p + p) % p) * 668265263 + seed * 1442695; n = Math.imul(n ^ (n >>> 13), 1274126177); return ((n ^ (n >>> 16)) >>> 0) / 4294967296; };
+  const vn = (u, v, p) => { const i = Math.floor(u), j = Math.floor(v), a = u - i, b = v - j, sa = a * a * (3 - 2 * a), sb = b * b * (3 - 2 * b); return (h(i, j, p) * (1 - sa) + h(i + 1, j, p) * sa) * (1 - sb) + (h(i, j + 1, p) * (1 - sa) + h(i + 1, j + 1, p) * sa) * sb; };
+  for (let j = 0; j < size; j++) for (let i = 0; i < size; i++) {
+    const u = i / size, v = j / size;
+    let n = vn(u * freq, v * freq, freq) * 0.5 + vn(u * freq * 2, v * freq * 2, freq * 2) * 0.27 + vn(u * freq * 4, v * freq * 4, freq * 4) * 0.15 + vn(u * freq * 16, v * freq * 16, freq * 16) * 0.08;
+    const g = Math.round((lo + (hi - lo) * n) * 255), k = (j * size + i) * 4;
+    img.data[k] = img.data[k + 1] = img.data[k + 2] = g; img.data[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  if (streaks) { // traces de roulettes / frottements
+    x.lineCap = 'round';
+    for (let i = 0; i < streaks; i++) {
+      const r = (k) => h(i, k, 9999);
+      x.strokeStyle = `rgba(${r(1) > 0.5 ? '255,255,255' : '0,0,0'},${0.03 + r(2) * 0.05})`; x.lineWidth = 1 + r(3) * 3;
+      x.beginPath(); const sx = r(4) * size, sy = r(5) * size; x.moveTo(sx, sy);
+      x.quadraticCurveTo(sx + (r(6) - 0.5) * size * 0.5, sy + (r(7) - 0.5) * size * 0.5, sx + (r(8) - 0.5) * size * 0.7, sy + (r(9) - 0.5) * size * 0.7); x.stroke();
+    }
+  }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+/* Rideau de scène : plan plissé */
+function curtainGeo(w, h) {
+  const g = new THREE.PlaneGeometry(w, h, Math.round(w * 22), 1), p = g.attributes.position;
+  for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setZ(i, Math.sin(x * 7.3) * 0.07 + Math.sin(x * 17.1 + 1.3) * 0.03 + Math.sin(x * 2.1) * 0.05); }
+  g.computeVertexNormals(); return g;
+}
+
 export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -44,12 +77,28 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
+  RectAreaLightUniformsLib.init();
+  // version allégée (sans reflets plans ni occlusion ambiante) sur mobile / tactile
+  const lite = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#030304');
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.32;
+  // l'environnement de départ sert à capturer le plateau, qui devient ensuite sa propre source de reflets
+  const baseEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environment = baseEnv; scene.environmentIntensity = 0.3;
+  const cubeRT = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
+  const cubeCam = new THREE.CubeCamera(0.1, 60, cubeRT); cubeCam.position.set(0, 1.3, 1.2); cubeCam.layers.enable(1);
+  // boîte à lumière du gril, visible uniquement dans les reflets (calque 1)
+  const softbox = new THREE.Mesh(new THREE.PlaneGeometry(13, 11), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.8, 0.8, 0.85) }));
+  softbox.rotation.x = Math.PI / 2; softbox.position.set(0, 6.5, 1.5); softbox.layers.set(1); scene.add(softbox);
+  let bakedEnv = null, mirror = null;
+  function bakeEnv() {
+    scene.environment = baseEnv; scene.environmentIntensity = 0.3; if (mirror) mirror.visible = false;
+    cubeCam.update(renderer, scene); if (mirror) mirror.visible = true;
+    const rtEnv = pmrem.fromCubemap(cubeRT.texture); bakedEnv?.dispose(); bakedEnv = rtEnv;
+    scene.environment = rtEnv.texture; scene.environmentIntensity = 1;
+  }
 
   const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
   const HOME = { pos: new THREE.Vector3(0, 2.2, 8.3), target: new THREE.Vector3(0, 1.2, -2.4) };
@@ -57,9 +106,11 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
 
   /* ---------- Matériaux ---------- */
   const M = {
-    shell: new THREE.MeshPhysicalMaterial({ color: '#ecebe8', roughness: 0.34, clearcoat: 0.25, clearcoatRoughness: 0.35 }),
-    floor: new THREE.MeshStandardMaterial({ color: '#cfcac2', roughness: 0.36, metalness: 0.0, envMapIntensity: 0.9 }),
-    curtain: new THREE.MeshStandardMaterial({ color: '#060607', roughness: 1, envMapIntensity: 0 }),
+    shell: new THREE.MeshPhysicalMaterial({ color: '#efeeeb', roughness: 1, clearcoat: 0.35, clearcoatRoughness: 0.22 }),
+    floor: new THREE.MeshStandardMaterial({ color: '#cbc6bd', roughness: 1, metalness: 0.0, envMapIntensity: lite ? 0.9 : 0.35 }),
+    curtain: new THREE.MeshStandardMaterial({ color: '#09090b', roughness: 0.95, envMapIntensity: 0.05, side: THREE.DoubleSide }),
+    rubber: new THREE.MeshStandardMaterial({ color: '#0a0a0b', roughness: 0.7 }),
+    seam: new THREE.MeshStandardMaterial({ color: '#8f8f8c', roughness: 0.8 }),
     black: new THREE.MeshStandardMaterial({ color: '#0b0b0d', roughness: 0.45, metalness: 0.2 }),
     bezel: new THREE.MeshStandardMaterial({ color: '#070708', roughness: 0.3, metalness: 0.5 }),
     grey: new THREE.MeshStandardMaterial({ color: '#8d9198', roughness: 0.7 }),
@@ -71,35 +122,84 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     frameFill: new THREE.MeshStandardMaterial({ color: '#2b2c31', roughness: 0.5, transparent: true, opacity: 0.82 }),
   };
   // LEDs teintées par l'édition : A = côté gauche, B = accent côté droit
-  const led = { A: new THREE.MeshBasicMaterial(), B: new THREE.MeshBasicMaterial(), cool: new THREE.MeshBasicMaterial() };
+  // profilé acrylique rétro-éclairé : [face diffusante, chant plus saturé]
+  const acrylic = () => new THREE.MeshPhysicalMaterial({ color: '#cfd6de', roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.15, emissive: '#ffffff' });
+  const led = { A: [acrylic(), acrylic()], B: [acrylic(), acrylic()], cool: [acrylic(), acrylic()] };
+  // grain de matière
+  const grain = { shell: noiseTex(256, 0.26, 0.4, 6, 3), floorR: noiseTex(512, 0.2, 0.46, 5, 11, 40), floorC: noiseTex(512, 0.9, 1, 4, 17, 26) };
+  grain.shell.repeat.set(3, 3); M.shell.roughnessMap = grain.shell;
+  for (const t of [grain.floorR, grain.floorC]) { t.repeat.set(7, 6); t.anisotropy = maxAniso; }
+  grain.floorC.colorSpace = THREE.SRGBColorSpace; M.floor.roughnessMap = grain.floorR; M.floor.map = grain.floorC;
 
   const world = new THREE.Group(); scene.add(world);
   const shadow = (m, cast = true, recv = true) => { m.castShadow = cast; m.receiveShadow = recv; return m; };
   const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; };
 
   /* ---------- Lumières ---------- */
-  scene.add(new THREE.HemisphereLight('#ffffff', '#77747c', 0.4));
-  const key = new THREE.DirectionalLight('#fff6ec', 1.35);
+  scene.add(new THREE.HemisphereLight('#ffffff', '#6f6c74', 0.16));
+  const key = new THREE.DirectionalLight('#fff4e8', 0.95);
   key.position.set(1.5, 9, 6); key.target.position.set(0, 0, -1); scene.add(key, key.target);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
   Object.assign(key.shadow.camera, { left: -8, right: 8, top: 8, bottom: -6, near: 1, far: 24 });
   const glow = {
-    A1: new THREE.PointLight('#4fb9ea', 26, 10, 2), A2: new THREE.PointLight('#4fb9ea', 20, 9, 2),
-    B1: new THREE.PointLight('#f4573b', 14, 8, 2), wall: new THREE.PointLight('#ffffff', 10, 9, 2),
+    A1: new THREE.PointLight('#4fb9ea', 16, 10, 2), A2: new THREE.PointLight('#4fb9ea', 12, 9, 2),
+    B1: new THREE.PointLight('#f4573b', 10, 8, 2), wall: new THREE.PointLight('#ffffff', 4, 9, 2),
   };
   glow.A1.position.set(-5.4, 1.1, 0.6); glow.A2.position.set(5.4, 1.1, 0.8); glow.B1.position.set(4.2, 1.5, -1.9); glow.wall.position.set(0, 2.2, -3.2);
   scene.add(...Object.values(glow));
 
   /* ---------- Sol, rideaux ---------- */
   const floor = shadow(mesh(new THREE.PlaneGeometry(26, 22), M.floor, 0, 0, 1), false); floor.rotation.x = -Math.PI / 2; world.add(floor);
-  const foldTex = (() => {
-    const c = makeCanvas(512, 8), x = c.getContext('2d');
-    for (let i = 0; i < 512; i++) { const v = 150 + Math.sin(i * 0.2) * 60 + Math.sin(i * 0.07 + 1) * 40; x.fillStyle = `rgb(${v},${v},${v})`; x.fillRect(i, 0, 1, 8); }
-    const t = new THREE.CanvasTexture(c); t.wrapS = THREE.RepeatWrapping; t.repeat.set(5, 1); return t;
+  world.add(mesh(curtainGeo(26, 9), M.curtain, 0, 4.5, -5.75));
+  for (const sd of [-1, 1]) { const w = mesh(curtainGeo(22, 9), M.curtain, sd * 8.2, 4.5, 1); w.rotation.y = -sd * Math.PI / 2; world.add(w); }
+  // reflet plan flouté du plateau dans le sol (fresnel + grain)
+  if (!lite) {
+    mirror = new Reflector(new THREE.PlaneGeometry(26, 22), {
+      textureWidth: 1024, textureHeight: 512, multisample: 0, clipBias: 0.003,
+      shader: {
+        uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tNoise: { value: grain.floorR } },
+        vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
+          void main() { vUv = textureMatrix * vec4(position, 1.0); vW = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+        fragmentShader: `uniform sampler2D tDiffuse; uniform sampler2D tNoise; varying vec4 vUv; varying vec3 vW;
+          void main() {
+            vec3 V = normalize(cameraPosition - vW);
+            float n = texture2D(tNoise, vW.xz * 0.27).r;
+            float fres = 0.05 + 0.95 * pow(1.0 - clamp(V.y, 0.0, 1.0), 4.5);
+            vec4 uv = vUv; uv.xy += (n - 0.33) * 0.03 * uv.w;
+            vec3 r = textureProj(tDiffuse, uv, 2.2 + n * 3.0).rgb * 0.5 + textureProj(tDiffuse, uv, 4.2).rgb * 0.5;
+            gl_FragColor = vec4(r, clamp(fres * (1.3 - n * 1.5), 0.0, 0.6));
+          }`,
+      },
+    });
+    const mrt = mirror.getRenderTarget(); mrt.texture.generateMipmaps = true; mrt.texture.minFilter = THREE.LinearMipmapLinearFilter;
+    mirror.material.transparent = true; mirror.material.depthWrite = false;
+    mirror.rotation.x = -Math.PI / 2; mirror.position.set(0, 0.002, 1); mirror.renderOrder = 1; world.add(mirror);
+  }
+  // ombres de contact (occlusion douce sous les éléments posés au sol)
+  const blobTex = (() => {
+    const c = makeCanvas(256, 256), x = c.getContext('2d');
+    x.filter = 'blur(26px)'; x.fillStyle = '#000'; x.beginPath(); x.roundRect(62, 62, 132, 132, 30); x.fill();
+    return new THREE.CanvasTexture(c);
   })();
-  M.curtain.bumpMap = foldTex; M.curtain.bumpScale = 4;
-  const back = mesh(new THREE.PlaneGeometry(26, 9), M.curtain, 0, 4.5, -5.7); world.add(back);
-  for (const s of [-1, 1]) { const w = mesh(new THREE.PlaneGeometry(22, 9), M.curtain, s * 8.2, 4.5, 1); w.rotation.y = -s * Math.PI / 2; world.add(w); }
+  const contact = (w, d, x, z, ry = 0, o = 0.6) => {
+    const m = mesh(new THREE.PlaneGeometry(w * 1.94 + 0.25, d * 1.94 + 0.7), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: o, depthWrite: false, color: '#000' }), x, 0.004, z);
+    m.rotation.set(-Math.PI / 2, 0, ry); m.renderOrder = 2; world.add(m);
+  };
+  // câbles au sol
+  const cable = (pts, r = 0.011) => world.add(shadow(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, r, z))), 48, r, 6), M.rubber)));
+  cable([[-2.3, 0.2], [-3.4, -0.4], [-4.6, 0.1], [-5.6, -0.6], [-7.6, -0.9]]);
+  cable([[3.0, 1.2], [3.6, 0.2], [4.9, 0.3], [5.7, -0.7], [7.6, -1.1]]);
+  cable([[3.2, 1.25], [3.9, 0.5], [4.7, 0.9], [6.2, 0.2], [7.6, 0.3]], 0.008);
+  cable([[0.3, -2.5], [0.9, -3.1], [0.5, -3.6], [1.2, -3.95]], 0.009);
+  // gril technique : tubes et projecteurs éteints
+  for (const z of [-2.6, 0.6, 3.6]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 16, 8), M.black, 0, 4.75, z); p.rotation.z = Math.PI / 2; world.add(p); }
+  for (const x of [-5, -1.7, 1.7, 5]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 10, 8), M.black, x, 4.8, 0.5); p.rotation.x = Math.PI / 2; world.add(p); }
+  for (const [x, z, ry] of [[-4.2, -2.6, 0.5], [-1.2, -2.6, 0.1], [1.4, -2.6, -0.1], [4.3, -2.6, -0.5], [-2.8, 0.6, 0.3], [2.6, 0.6, -0.3]]) {
+    const g = new THREE.Group(); g.position.set(x, 4.5, z); g.rotation.set(0.9, ry, 0);
+    g.add(mesh(new THREE.BoxGeometry(0.22, 0.26, 0.3), M.black), mesh(new THREE.BoxGeometry(0.3, 0.02, 0.02), M.black, 0, 0.16, 0));
+    const lens = mesh(new THREE.CircleGeometry(0.08, 20), new THREE.MeshStandardMaterial({ color: '#20232a', roughness: 0.1, metalness: 0.8 }), 0, 0, 0.151); g.add(lens);
+    world.add(g);
+  }
 
   /* ---------- Textures d'écran ---------- */
   const mkTex = (w, h) => { const c = makeCanvas(w, h), t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = maxAniso; return { c, t }; };
@@ -119,6 +219,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     const mat = new THREE.MeshBasicMaterial({ map: T.wall.t });
     const face = mesh(new THREE.PlaneGeometry(WALL.w, WALL.h), mat, 0, WALL.y, WALL.z); world.add(face); register('trailer', face, mat);
     world.add(mesh(new THREE.BoxGeometry(WALL.w + 0.12, WALL.h + 0.12, 0.2), M.black, 0, WALL.y, WALL.z - 0.11));
+    const wl = new THREE.RectAreaLight('#b9c6ff', 1.6, WALL.w, WALL.h); wl.position.set(0, WALL.y, WALL.z + 0.05); wl.rotation.y = Math.PI; world.add(wl);
     world.add(shadow(mesh(new THREE.BoxGeometry(7.4, 0.32, 1.3), M.shell, 0, 0.16, WALL.z - 0.1)));
     world.add(shadow(mesh(new THREE.BoxGeometry(7.9, 0.16, 1.7), M.shell, 0, 0.08, WALL.z)));
   }
@@ -127,6 +228,8 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   const bar = (len, x, y, z, ry = 0, rz = 0) => {
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, ry, rz);
     g.add(mesh(new THREE.BoxGeometry(len, 0.07, 0.16), M.ledWhite), mesh(new THREE.BoxGeometry(len + 0.04, 0.1, 0.2), M.black, 0, 0.085, 0));
+    const l = new THREE.RectAreaLight('#f4f7ff', 11, len, 0.3); l.rotation.x = -Math.PI / 2; l.position.y = -0.04; g.add(l);
+    for (const dx of [-len * 0.35, len * 0.35]) g.add(mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.2, 4), M.black, dx, 0.7, 0));
     world.add(g);
   };
   bar(6.0, 0, 4.0, -4.1);
@@ -196,6 +299,10 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
       const w = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 14), M.black, x, 0.045, z); w.rotation.x = Math.PI / 2; g.add(w);
       g.add(mesh(new THREE.BoxGeometry(0.05, 0.03, 0.05), M.metal, x, 0.1, z));
     }
+    // joints d'assemblage de la coque
+    for (const x of [0, -L / 2 + R, L / 2 - R]) {
+      g.add(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, x, 0.1 + H + 0.0005, 0), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + H - t / 2, D / 2), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + t / 2, D / 2));
+    }
     // sur le plateau : feuille, stylo, télécommande
     const top = 0.1 + H;
     g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, top + 0.003, 0.02));
@@ -205,6 +312,12 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     return g;
   }
   const deskA = place(teamDesk('A'), -2.85, 0.9, 1.05), deskB = place(teamDesk('B'), 2.85, 0.9, -1.05);
+  contact(3.5, 0.74, -2.85, 0.9, 1.05, 0.75); contact(3.5, 0.74, 2.85, 0.9, -1.05, 0.75);
+  contact(1.86, 0.56, 0, -2.35, 0, 0.7); contact(7.9, 1.7, 0, -4.75, 0, 0.5);
+  for (const sd of [-1, 1]) {
+    contact(0.95, 0.62, sd * 4.15, 0.5, sd * -0.8, 0.55); contact(0.85, 0.5, sd * 3.05, -3.55, 0, 0.6);
+    contact(3.3, 0.24, sd * 5.75, 1.9, sd * -1.15, 0.6); contact(0.95, 0.24, sd * 4.55, -1.35, sd * -0.55, 0.6); contact(2.25, 0.24, sd * 3.45, -2.85, sd * -0.2, 0.6);
+  }
 
   /* ---------- Écrans d'équipe sur pied ---------- */
   function teamTV(side) {
@@ -241,10 +354,13 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     paintWall(T.wall.c, ed); paintTeamTV(T.tvA.c, ed, 'A'); paintTeamTV(T.tvB.c, ed, 'B');
     paintDeskPanel(T.deskA.c, ed, 'A'); paintDeskPanel(T.deskB.c, ed, 'B'); paintDeskMonitor(T.monitor.c, ed); paintLectern(T.lectern.c, ed);
     for (const k in T) T[k].t.needsUpdate = true;
-    led.A.color.set(ed.teamA.color).lerp(col.set('#ffffff'), 0.22).multiplyScalar(1.55);
-    led.B.color.set(ed.teamB.color).lerp(col.set('#ffffff'), 0.12).multiplyScalar(1.6);
-    led.cool.color.set(ed.teamA.color).lerp(col.set('#ffffff'), 0.62).multiplyScalar(1.45);
+    const tint = (pair, hex, wFace, wSide, k) => {
+      pair[0].emissive.set(hex).lerp(col.set('#ffffff'), wFace).multiplyScalar(k);
+      pair[1].emissive.set(hex).lerp(col.set('#ffffff'), wSide).multiplyScalar(k * 1.3);
+    };
+    tint(led.A, ed.teamA.color, 0.42, 0.06, 0.9); tint(led.B, ed.teamB.color, 0.32, 0.03, 0.95); tint(led.cool, ed.teamA.color, 0.78, 0.45, 0.85);
     glow.A1.color.set(ed.teamA.color); glow.A2.color.set(ed.teamA.color); glow.B1.color.set(ed.teamB.color);
+    bakeEnv();
   }
 
   /* ---------- Rendu : bloom sur les LEDs ---------- */
@@ -253,6 +369,21 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   composer.addPass(new RenderPass(scene, camera));
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.55, 1.12); composer.addPass(bloom);
   composer.addPass(new OutputPass());
+  // objectif : légère aberration chromatique, vignettage, grain
+  const lens = new ShaderPass({
+    uniforms: { tDiffuse: { value: null }, time: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float time; varying vec2 vUv;
+      float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233)) + time) * 43758.5453); }
+      void main() {
+        vec2 d = vUv - 0.5; float r2 = dot(d, d); vec2 o = d * r2 * 0.011;
+        vec3 c = vec3(texture2D(tDiffuse, vUv - o).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + o).b);
+        c *= 1.0 - r2 * 0.5;
+        c += (h(gl_FragCoord.xy) - 0.5) * 0.04 * (1.0 - 0.5 * dot(c, vec3(0.333)));
+        gl_FragColor = vec4(c, 1.0);
+      }`,
+  });
+  composer.addPass(lens);
 
   /* ---------- Cadrage ---------- */
   const BASE_FOV = 44, REF_ASPECT = 1.75;
@@ -358,6 +489,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
       for (const m of actionMats[k]) { if (m.emissiveMap) m.emissiveIntensity = 1 + hl[k] * 0.45; else m.color.setScalar(1 + hl[k] * 0.45); }
     }
     projectHotspots();
+    lens.uniforms.time.value = (now * 0.001) % 10;
     composer.render();
   }
 

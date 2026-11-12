@@ -110,6 +110,10 @@ export function paintWall(c, ed) {
     x.moveTo(px, py - s); x.quadraticCurveTo(px, py, px + s, py); x.quadraticCurveTo(px, py, px, py + s); x.quadraticCurveTo(px, py, px - s, py); x.quadraticCurveTo(px, py, px, py - s); x.fill();
   }
   drawLogo(x, W / 2, H * 0.53, 470 * u, ed);
+  // joints des dalles LED
+  x.fillStyle = 'rgba(0,0,0,.28)';
+  for (let i = 1; i < 12; i++) x.fillRect(Math.round(i * W / 12), 0, 1.5 * u, H);
+  for (let j = 1; j < 7; j++) x.fillRect(0, Math.round(j * H / 7), W, 1.5 * u);
 }
 
 /* ---------- Écrans d'équipe ---------- */
