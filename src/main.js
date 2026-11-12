@@ -1,4 +1,8 @@
+import '@fontsource/space-grotesk/500.css';
+import '@fontsource/space-grotesk/600.css';
+import '@fontsource/space-grotesk/700.css';
 import { createStage } from './stage3d.js';
+import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -7,21 +11,22 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const ticker = $('#ticker');
 $('#tickerClose').addEventListener('click', () => ticker.classList.add('is-hidden'));
 const back = $('#backToStage');
-back.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); stage?.view('home'); });
+back.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); closeAll(); });
 addEventListener('scroll', () => back.classList.toggle('is-visible', scrollY > innerHeight * 0.6), { passive: true });
 
 /* ---------- Hero 3D ---------- */
 const canvas = $('#stage3d');
-const hs = { teaser: $('#hsTeaser'), universe: $('#hsUniverse'), summary: $('#hsSummary') };
+const hs = Object.fromEntries($$('.hotspot').map((el) => [el.dataset.action, el]));
 const hint = $('#hint');
-const closeBtn = $('#teaserClose');
-let stage = null, teaser = false;
+const panel = $('#stagePanel'), panelBody = $('#panelBody');
+const trailer = $('#trailer'), trailerFrame = $('#trailerFrame');
+let stage = null, open = null, year = DEFAULT_EDITION;
 
 function setHotspots(pos) {
   for (const [k, el] of Object.entries(hs)) {
     const p = pos[k]; if (!p) continue;
     el.style.left = p.x + 'px'; el.style.top = p.y + 'px';
-    el.classList.toggle('is-on', p.visible && !teaser);
+    el.classList.toggle('is-on', p.visible && !open);
   }
 }
 
@@ -29,44 +34,79 @@ try {
   stage = createStage(canvas, {
     onReady: () => canvas.classList.add('is-ready'),
     onHotspots: setHotspots,
+    onHover: (name) => { for (const [k, el] of Object.entries(hs)) el.classList.toggle('is-hover', k === name); },
   });
   stage.onInteract(() => hint.classList.add('is-hidden'));
-  stage.onClick((name) => {
-    if (name === 'center') startTeaser();
-    else if (name === 'left') goUniverse();
-    else if (name === 'right') goSummary();
-  });
+  stage.onClick((name) => act(name));
 } catch (err) {
   console.warn('WebGL indisponible, affichage du rendu statique.', err);
   Object.values(hs).forEach((el) => (el.hidden = true));
   hint.hidden = true;
 }
 
-function startTeaser() { if (!stage || teaser) return; teaser = true; stage.setTeaser(true); stage.view('center'); closeBtn.hidden = false; hint.classList.add('is-hidden'); }
-function stopTeaser() { teaser = false; stage?.setTeaser(false); stage?.view('home'); closeBtn.hidden = true; }
-function goUniverse() { document.getElementById('concept').scrollIntoView({ behavior: 'smooth' }); }
-function goSummary() { document.getElementById('archive').scrollIntoView({ behavior: 'smooth' }); }
-hs.teaser.addEventListener('click', startTeaser);
-hs.universe.addEventListener('click', goUniverse);
-hs.summary.addEventListener('click', goSummary);
-closeBtn.addEventListener('click', stopTeaser);
-addEventListener('keydown', (e) => { if (e.key === 'Escape' && teaser) stopTeaser(); });
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function teamHTML(ed, team) {
+  return `<span class="pill" style="background:${team.color}">${esc(team.label)} ${esc(team.tag)}</span>
+    <h3>Les intervenants</h3>
+    <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
+    <ul class="speakers">${team.speakers.map((s) => `<li><span class="speakers__avatar" style="background:${team.color}">${esc(s.name.split(' ').map((w) => w[0]).slice(0, 2).join(''))}</span><div><b>${esc(s.name)}</b><small>${esc(s.role)}</small></div></li>`).join('')}</ul>`;
+}
+function summaryHTML(ed) {
+  return `<span class="pill pill--orange">Édition ${ed.year}</span>
+    <h3>${esc(ed.theme)}</h3>
+    <p class="body stage-panel__meta">${esc(ed.date)} · ${esc(ed.time)}</p>
+    <p class="body">${esc(ed.summary)}</p>
+    <a class="chip chip--lime" href="#archive">VOIR LES ARCHIVES <i>↗</i></a>`;
+}
+function trailerHTML(ed) {
+  const src = ed.trailer;
+  if (!src) return `<div class="trailer__empty"><b>MICI Challenge ${ed.year}</b><span>Le trailer de cette édition sera bientôt disponible.</span></div>`;
+  if (/\.(mp4|webm)(\?|$)/i.test(src)) return `<video src="${esc(src)}" controls autoplay playsinline></video>`;
+  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Trailer MICI Challenge ${ed.year}"></iframe>`;
+}
+
+function act(name) {
+  const ed = EDITIONS[year];
+  if (open === name) return;
+  closeAll(false);
+  open = name; hint.classList.add('is-hidden'); stage?.view(name);
+  if (name === 'trailer') { trailerFrame.innerHTML = trailerHTML(ed); trailer.hidden = false; requestAnimationFrame(() => trailer.classList.add('is-open')); $('#trailerClose').focus(); return; }
+  panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
+  panel.dataset.side = name === 'teamB' ? 'left' : 'right';
+  panel.hidden = false; requestAnimationFrame(() => panel.classList.add('is-open'));
+}
+function closeAll(goHome = true) {
+  if (!open) return; open = null;
+  panel.classList.remove('is-open'); panel.hidden = true;
+  trailer.classList.remove('is-open'); trailer.hidden = true; trailerFrame.innerHTML = '';
+  if (goHome) stage?.view('home');
+}
+for (const [k, el] of Object.entries(hs)) {
+  el.addEventListener('click', () => act(k));
+  el.addEventListener('pointerenter', () => stage?.hover(k));
+  el.addEventListener('pointerleave', () => stage?.hover(null));
+}
+$('#panelClose').addEventListener('click', () => closeAll());
+$('#trailerClose').addEventListener('click', () => closeAll());
+trailer.addEventListener('click', (e) => { if (e.target === trailer) closeAll(); });
+panelBody.addEventListener('click', (e) => { if (e.target.closest('a')) closeAll(); });
+addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 
 /* ---------- Onglets d'éditions ---------- */
 const tabs = $$('.chip--edition');
 const prog = $('#editionsProgress');
-function setEdition(year) {
-  tabs.forEach((t) => { const on = t.dataset.edition === String(year); t.classList.toggle('is-active', on); t.setAttribute('aria-selected', on); });
-  const i = tabs.findIndex((t) => t.dataset.edition === String(year));
-  const el = tabs[i], box = el.parentElement.getBoundingClientRect(), r = el.getBoundingClientRect();
+function setEdition(y) {
+  if (String(y) !== String(year)) closeAll();
+  year = +y;
+  tabs.forEach((t) => { const on = t.dataset.edition === String(y); t.classList.toggle('is-active', on); t.setAttribute('aria-selected', on); });
+  const el = tabs.find((t) => t.dataset.edition === String(y)), box = el.parentElement.getBoundingClientRect(), r = el.getBoundingClientRect();
   prog.style.width = r.left - box.left + r.width / 2 + 'px';
-  $('#logoYear').textContent = year;
-  stage?.setEdition(year);
+  stage?.setEdition(y);
 }
 tabs.forEach((t) => t.addEventListener('click', () => setEdition(t.dataset.edition)));
-addEventListener('resize', () => setEdition($('.chip--edition.is-active').dataset.edition));
-document.fonts?.ready.then(() => setEdition($('.chip--edition.is-active').dataset.edition));
-setEdition(2024);
+addEventListener('resize', () => setEdition(year));
+document.fonts?.ready.then(() => setEdition(year));
+setEdition(year);
 
 /* ---------- Filtres d'archives ---------- */
 const filters = $$('.pill--filter');
