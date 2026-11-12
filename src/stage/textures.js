@@ -16,7 +16,15 @@ function whiten(img) {
   x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
   return c;
 }
-export async function loadAssets() {
+/* Visuels fournis pour une édition (écrans, façades) */
+export const artImage = (file) => assets.art?.[file] || null;
+function cover(c, img) {
+  const x = c.getContext('2d'), k = Math.max(c.width / img.width, c.height / img.height), w = img.width * k, h = img.height * k;
+  x.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h); return x;
+}
+export async function loadAssets(artFiles = []) {
+  const files = [...new Set(artFiles)];
+  assets.art = Object.fromEntries((await Promise.all(files.map(loadImg))).map((im, i) => [files[i], im]));
   const [mici26, challenge, celltrion] = await Promise.all(['65192.svg', '0c29f.svg', '0954c.svg'].map(loadImg));
   Object.assign(assets, { mici26: whiten(mici26), challenge: whiten(challenge), celltrion: whiten(celltrion) });
   await Promise.all([`500 40px ${FONT}`, `700 40px ${FONT}`].map((f) => document.fonts?.load(f).catch(() => {})));
@@ -91,8 +99,14 @@ function glowStroke(ctx, color, lw, path) {
 }
 
 /* ---------- Mur LED du fond ---------- */
+const ledSeams = (x, W, H, u) => {
+  x.fillStyle = 'rgba(0,0,0,.28)';
+  for (let i = 1; i < 12; i++) x.fillRect(Math.round(i * W / 12), 0, 1.5 * u, H);
+  for (let j = 1; j < 7; j++) x.fillRect(0, Math.round(j * H / 7), W, 1.5 * u);
+};
 export function paintWall(c, ed) {
   const x = c.getContext('2d'), W = c.width, H = c.height, u = W / 2048;
+  const im = artImage(ed.art?.wall); if (im) { cover(c, im); ledSeams(x, W, H, u); return; }
   x.fillStyle = BLACK; x.fillRect(0, 0, W, H);
   const A = ed.teamA.color, B = ed.teamB.color;
   glowStroke(x, A, 64 * u, () => { x.beginPath(); x.moveTo(960 * u, 140 * u); x.bezierCurveTo(900 * u, 20 * u, 1300 * u, 10 * u, 2080 * u, -40 * u); });
@@ -110,14 +124,12 @@ export function paintWall(c, ed) {
     x.moveTo(px, py - s); x.quadraticCurveTo(px, py, px + s, py); x.quadraticCurveTo(px, py, px, py + s); x.quadraticCurveTo(px, py, px - s, py); x.quadraticCurveTo(px, py, px, py - s); x.fill();
   }
   drawLogo(x, W / 2, H * 0.53, 470 * u, ed);
-  // joints des dalles LED
-  x.fillStyle = 'rgba(0,0,0,.28)';
-  for (let i = 1; i < 12; i++) x.fillRect(Math.round(i * W / 12), 0, 1.5 * u, H);
-  for (let j = 1; j < 7; j++) x.fillRect(0, Math.round(j * H / 7), W, 1.5 * u);
+  ledSeams(x, W, H, u);
 }
 
 /* ---------- Écrans d'équipe ---------- */
 export function paintTeamTV(c, ed, side) {
+  const im = artImage(ed.art?.['tv' + side]); if (im) { cover(c, im); return; }
   const x = c.getContext('2d'), W = c.width, H = c.height, u = W / 1024, team = side === 'A' ? ed.teamA : ed.teamB;
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d1e22'); g.addColorStop(1, '#141518');
   x.fillStyle = g; x.fillRect(0, 0, W, H);

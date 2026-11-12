@@ -8,7 +8,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
-import { loadAssets, makeCanvas, paintWall, paintTeamTV, paintDeskPanel, paintDeskMonitor, paintLectern } from './stage/textures.js';
+import { loadAssets, artImage, makeCanvas, paintWall, paintTeamTV, paintDeskPanel, paintDeskMonitor, paintLectern } from './stage/textures.js';
 
 /* ---------- Géométries utilitaires ---------- */
 function rrPath(p, w, h, r) {
@@ -124,7 +124,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   // LEDs teintées par l'édition : A = côté gauche, B = accent côté droit
   // profilé acrylique rétro-éclairé : [face diffusante, chant plus saturé]
   const acrylic = () => new THREE.MeshPhysicalMaterial({ color: '#cfd6de', roughness: 0.3, clearcoat: 0.8, clearcoatRoughness: 0.15, emissive: '#ffffff' });
-  const led = { A: [acrylic(), acrylic()], B: [acrylic(), acrylic()], cool: [acrylic(), acrylic()] };
+  const led = { L: [acrylic(), acrylic()], R: [acrylic(), acrylic()], RT: [acrylic(), acrylic()], coolL: [acrylic(), acrylic()], coolR: [acrylic(), acrylic()] };
   // grain de matière
   const grain = { shell: noiseTex(256, 0.26, 0.4, 6, 3), floorR: noiseTex(512, 0.2, 0.46, 5, 11, 40), floorC: noiseTex(512, 0.9, 1, 4, 17, 26) };
   grain.shell.repeat.set(3, 3); M.shell.roughnessMap = grain.shell;
@@ -136,7 +136,8 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   const mesh = (geo, mat, x = 0, y = 0, z = 0) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); return m; };
 
   /* ---------- Lumières ---------- */
-  scene.add(new THREE.HemisphereLight('#ffffff', '#6f6c74', 0.16));
+  const hemi = new THREE.HemisphereLight('#ffffff', '#6f6c74', 0.16); scene.add(hemi);
+  const rectLights = [];
   const key = new THREE.DirectionalLight('#fff4e8', 0.95);
   key.position.set(1.5, 9, 6); key.target.position.set(0, 0, -1); scene.add(key, key.target);
   key.castShadow = true; key.shadow.mapSize.set(2048, 2048); key.shadow.radius = 6; key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
@@ -183,7 +184,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   })();
   const contact = (w, d, x, z, ry = 0, o = 0.6) => {
     const m = mesh(new THREE.PlaneGeometry(w * 1.94 + 0.25, d * 1.94 + 0.7), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: o, depthWrite: false, color: '#000' }), x, 0.004, z);
-    m.rotation.set(-Math.PI / 2, 0, ry); m.renderOrder = 2; world.add(m);
+    m.rotation.set(-Math.PI / 2, 0, ry); m.renderOrder = 2; world.add(m); return m;
   };
   // câbles au sol
   const cable = (pts, r = 0.011) => world.add(shadow(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, r, z))), 48, r, 6), M.rubber)));
@@ -211,15 +212,18 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
 
   /* ---------- Éléments interactifs ---------- */
   const pickables = [], actionMats = {}; // action -> matériaux à éclaircir au survol
-  const register = (action, m, mat) => { m.userData.action = action; pickables.push(m); if (mat) (actionMats[action] ||= []).push(mat); };
+  // grp : écran piloté par la transition d'édition (allumage / extinction) ; base : intensité nominale
+  const register = (action, m, mat, grp = null, base = 1) => { m.userData.action = action; pickables.push(m); if (mat) (actionMats[action] ||= []).push({ mat, grp, base }); };
+  // décors propres à une édition : 'classic' (pupitres à moniteur, 2026) ou 'printed' (façades imprimées, 2025)
+  const sets = { classic: [], printed: [] };
 
   /* ---------- Mur LED + estrade ---------- */
   const WALL = { w: 5.9, h: 3.32, y: 2.0, z: -4.75 };
   {
     const mat = new THREE.MeshBasicMaterial({ map: T.wall.t });
-    const face = mesh(new THREE.PlaneGeometry(WALL.w, WALL.h), mat, 0, WALL.y, WALL.z); world.add(face); register('trailer', face, mat);
+    const face = mesh(new THREE.PlaneGeometry(WALL.w, WALL.h), mat, 0, WALL.y, WALL.z); world.add(face); register('trailer', face, mat, 'wall');
     world.add(mesh(new THREE.BoxGeometry(WALL.w + 0.12, WALL.h + 0.12, 0.2), M.black, 0, WALL.y, WALL.z - 0.11));
-    const wl = new THREE.RectAreaLight('#b9c6ff', 1.6, WALL.w, WALL.h); wl.position.set(0, WALL.y, WALL.z + 0.05); wl.rotation.y = Math.PI; world.add(wl);
+    const wl = new THREE.RectAreaLight('#b9c6ff', 1.6, WALL.w, WALL.h); wl.position.set(0, WALL.y, WALL.z + 0.05); wl.rotation.y = Math.PI; world.add(wl); rectLights.push(wl);
     world.add(shadow(mesh(new THREE.BoxGeometry(7.4, 0.32, 1.3), M.shell, 0, 0.16, WALL.z - 0.1)));
     world.add(shadow(mesh(new THREE.BoxGeometry(7.9, 0.16, 1.7), M.shell, 0, 0.08, WALL.z)));
   }
@@ -228,7 +232,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   const bar = (len, x, y, z, ry = 0, rz = 0) => {
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, ry, rz);
     g.add(mesh(new THREE.BoxGeometry(len, 0.07, 0.16), M.ledWhite), mesh(new THREE.BoxGeometry(len + 0.04, 0.1, 0.2), M.black, 0, 0.085, 0));
-    const l = new THREE.RectAreaLight('#f4f7ff', 11, len, 0.3); l.rotation.x = -Math.PI / 2; l.position.y = -0.04; g.add(l);
+    const l = new THREE.RectAreaLight('#f4f7ff', 11, len, 0.3); l.rotation.x = -Math.PI / 2; l.position.y = -0.04; g.add(l); rectLights.push(l);
     for (const dx of [-len * 0.35, len * 0.35]) g.add(mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.2, 4), M.black, dx, 0.7, 0));
     world.add(g);
   };
@@ -258,13 +262,13 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   }
   const place = (o, x, z, ry, y = 0) => { o.position.set(x, y, z); o.rotation.y = ry; world.add(o); return o; };
   // gauche
-  place(portal(3.3, 1.55, led.A), -5.75, 1.9, 1.15);
-  place(portal(0.95, 2.5, led.A, { r: 0.2 }), -4.55, -1.35, 0.55);
-  place(portal(2.25, 1.45, led.cool, { r: 0.22 }), -3.45, -2.85, 0.2);
+  place(portal(3.3, 1.55, led.L), -5.75, 1.9, 1.15);
+  place(portal(0.95, 2.5, led.L, { r: 0.2 }), -4.55, -1.35, 0.55);
+  place(portal(2.25, 1.45, led.coolL, { r: 0.22 }), -3.45, -2.85, 0.2);
   // droite (le portique vertical prend la couleur de l'équipe B)
-  place(portal(3.3, 1.55, led.A), 5.75, 1.9, -1.15);
-  place(portal(0.95, 2.5, led.B, { r: 0.2 }), 4.55, -1.35, -0.55);
-  place(portal(2.25, 1.45, led.cool, { r: 0.22 }), 3.45, -2.85, -0.2);
+  place(portal(3.3, 1.55, led.R), 5.75, 1.9, -1.15);
+  place(portal(0.95, 2.5, led.RT, { r: 0.2 }), 4.55, -1.35, -0.55);
+  place(portal(2.25, 1.45, led.coolR, { r: 0.22 }), 3.45, -2.85, -0.2);
 
   /* ---------- Caméras PTZ sur colonne ---------- */
   function ptz() {
@@ -307,13 +311,13 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     const top = 0.1 + H;
     g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, top + 0.003, 0.02));
     g.add(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, top + 0.012, 0.05));
-    register('team' + side, panel, panelMat); register('team' + side, mon, monMat);
+    register('team' + side, panel, panelMat); register('team' + side, mon, monMat, 'desk' + side);
     g.traverse((o) => { if (o.isMesh && !o.userData.action) register('team' + side, o); });
     return g;
   }
   const deskA = place(teamDesk('A'), -2.85, 0.9, 1.05), deskB = place(teamDesk('B'), 2.85, 0.9, -1.05);
-  contact(3.5, 0.74, -2.85, 0.9, 1.05, 0.75); contact(3.5, 0.74, 2.85, 0.9, -1.05, 0.75);
-  contact(1.86, 0.56, 0, -2.35, 0, 0.7); contact(7.9, 1.7, 0, -4.75, 0, 0.5);
+  sets.classic.push(deskA, deskB, contact(3.5, 0.74, -2.85, 0.9, 1.05, 0.75), contact(3.5, 0.74, 2.85, 0.9, -1.05, 0.75), contact(1.86, 0.56, 0, -2.35, 0, 0.7));
+  contact(7.9, 1.7, 0, -4.75, 0, 0.5);
   for (const sd of [-1, 1]) {
     contact(0.95, 0.62, sd * 4.15, 0.5, sd * -0.8, 0.55); contact(0.85, 0.5, sd * 3.05, -3.55, 0, 0.6);
     contact(3.3, 0.24, sd * 5.75, 1.9, sd * -1.15, 0.6); contact(0.95, 0.24, sd * 4.55, -1.35, sd * -0.55, 0.6); contact(2.25, 0.24, sd * 3.45, -2.85, sd * -0.2, 0.6);
@@ -326,7 +330,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     g.add(shadow(mesh(new THREE.BoxGeometry(0.16, y, 0.09), M.grey, 0, y / 2, -0.12)));
     g.add(shadow(mesh(new THREE.BoxGeometry(w + 0.04, h + 0.04, 0.06), M.bezel, 0, y, 0)));
     const mat = glass(T['tv' + side].t, 0.32), face = mesh(new THREE.PlaneGeometry(w, h), mat, 0, y, 0.031); g.add(face);
-    register('team' + side, face, mat);
+    register('team' + side, face, mat, 'tv' + side);
     return g;
   }
   const tvA = place(teamTV('A'), -4.15, 0.55, 0.8), tvB = place(teamTV('B'), 4.15, 0.55, -0.8);
@@ -341,9 +345,67 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     const bk = mesh(panelGeo(inner, W - 2 * t, H - 2 * t), M.greyDark, 0, cy, -D / 2 + 0.05); bk.rotation.y = Math.PI; lectern.add(bk);
     for (const x of [-0.5, 0.5]) lectern.add(shadow(mesh(new THREE.BoxGeometry(0.07, 0.18, D * 0.9), M.shell, x, 0.09, 0)));
     lectern.add(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, 0.05, 0.16 + H + 0.012, 0.05));
-    register('summary', face, mat);
+    register('summary', face, mat, 'lectern');
     lectern.traverse((o) => { if (o.isMesh && !o.userData.action) register('summary', o); });
-    place(lectern, 0, -2.35, 0);
+    place(lectern, 0, -2.35, 0); sets.classic.push(lectern);
+  }
+
+  /* ---------- Décor « façades imprimées » (édition 2025) ---------- */
+  const artTex = {};
+  const art = (k) => artTex[k] ||= Object.assign(new THREE.Texture(), { colorSpace: THREE.SRGBColorSpace, anisotropy: maxAniso });
+  function printedDesk(key, action, L, H, plinthW) {
+    const g = new THREE.Group(), D = 0.7, R = 0.15, t = 0.036, base = 0.12, cy = base + H / 2;
+    const inner = (p) => rrPath(p, L - 2 * t, H - 2 * t, R - t * 0.7);
+    g.add(shadow(mesh(ringGeo((p) => rrPath(p, L, H, R), inner, D), M.shell, 0, cy, 0)));
+    const mat = new THREE.MeshStandardMaterial({ map: art(key), emissive: '#ffffff', emissiveMap: art(key), emissiveIntensity: 0.45, roughness: 0.42, envMapIntensity: 0.7 });
+    const face = mesh(panelGeo(inner, L - 2 * t, H - 2 * t), mat, 0, cy, D / 2 - 0.022); g.add(face);
+    const bk = mesh(panelGeo(inner, L - 2 * t, H - 2 * t), M.greyDark, 0, cy, -D / 2 + 0.05); bk.rotation.y = Math.PI; g.add(bk);
+    g.add(shadow(mesh(new THREE.BoxGeometry(plinthW, base, D * 0.8), M.shell, 0, base / 2, 0)));
+    g.add(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, 0, base + H + 0.0005, 0));
+    g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, base + H + 0.003, 0.02), mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, base + H + 0.012, 0.05));
+    register(action, face, mat, key, 0.45);
+    g.traverse((o) => { if (o.isMesh && !o.userData.action) register(action, o); });
+    return g;
+  }
+  sets.printed.push(
+    place(printedDesk('deskA', 'teamA', 2.8, 1.01, 2.6), -2.85, 0.9, 1.05), place(printedDesk('deskB', 'teamB', 2.8, 1.01, 2.6), 2.85, 0.9, -1.05),
+    place(printedDesk('lectern', 'summary', 1.44, 1.01, 1.1), 0, -2.35, 0),
+    contact(2.8, 0.7, -2.85, 0.9, 1.05, 0.75), contact(2.8, 0.7, 2.85, 0.9, -1.05, 0.75), contact(1.44, 0.7, 0, -2.35, 0, 0.7),
+  );
+
+  /* ---------- Alimentation du plateau : lumières (room) et écrans (pw), animées pendant les transitions ---------- */
+  let room = 1;
+  const pw = { wall: 1, lectern: 1, tvA: 1, tvB: 1, deskA: 1, deskB: 1 }, hl = {}; // hl : intensité de survol lissée par action
+  const dimmable = [hemi, key, ...Object.values(glow), ...rectLights].map((l) => ({ l, base: l.intensity }));
+  const ledMats = Object.values(led).flat(), ledWhiteBase = M.ledWhite.color.clone();
+  function applyPower() {
+    for (const d of dimmable) d.l.intensity = d.base * room;
+    for (const m of ledMats) m.emissiveIntensity = room;
+    M.ledWhite.color.copy(ledWhiteBase).multiplyScalar(0.03 + 0.97 * room);
+    if (bakedEnv) scene.environmentIntensity = 0.1 + 0.9 * room;
+    for (const k in actionMats) for (const { mat, grp, base } of actionMats[k]) {
+      const v = (grp ? pw[grp] : 1) * (1 + (hl[k] || 0) * 0.45);
+      if (mat.emissiveMap) mat.emissiveIntensity = base * v; else mat.color.setScalar(v);
+    }
+  }
+  /* Transition d'édition : extinction, changement de décor dans le noir, rallumage échelonné des écrans puis des lumières */
+  let trans = null;
+  const ON_DELAY = { wall: 0.05, lectern: 0.22, tvA: 0.34, tvB: 0.44, deskA: 0.54, deskB: 0.62 };
+  const clamp01 = (x) => Math.min(1, Math.max(0, x)), smooth = (x) => x * x * (3 - 2 * x);
+  const flicker = (x) => (x <= 0 ? 0 : x < 0.4 ? (Math.random() > 0.45 ? 0.25 + Math.random() * 0.6 : 0.04) : smooth(clamp01((x - 0.4) / 0.6)) * 0.3 + 0.7);
+  function stepTransition(now) {
+    if (!trans) return 0;
+    if (!trans.swapped) {
+      const k = clamp01((now - trans.t0) / 380);
+      room = 1 - smooth(k); for (const g in pw) pw[g] = k > 0.55 ? 0 : flicker(1 - k * 1.2);
+      if (k >= 1) { room = 0; for (const g in pw) pw[g] = 0; edition = trans.to; applyEdition(); trans.swapped = true; trans.t1 = performance.now(); }
+      return k * 0.5;
+    }
+    const u = (now - trans.t1) / 1000;
+    for (const g in pw) pw[g] = flicker((u - ON_DELAY[g]) / 0.42);
+    room = smooth(clamp01((u - 0.3) / 0.95));
+    if (u > 1.3) { room = 1; for (const g in pw) pw[g] = 1; trans = null; return 0; }
+    return 0.5 + (u / 1.3) * 0.5;
   }
 
   /* ---------- Édition : repeint les écrans et reteinte les LEDs ---------- */
@@ -354,13 +416,21 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     paintWall(T.wall.c, ed); paintTeamTV(T.tvA.c, ed, 'A'); paintTeamTV(T.tvB.c, ed, 'B');
     paintDeskPanel(T.deskA.c, ed, 'A'); paintDeskPanel(T.deskB.c, ed, 'B'); paintDeskMonitor(T.monitor.c, ed); paintLectern(T.lectern.c, ed);
     for (const k in T) T[k].t.needsUpdate = true;
+    const setName = ed.set || 'classic';
+    for (const k in sets) for (const o of sets[k]) o.visible = k === setName;
+    if (ed.art) for (const k of ['deskA', 'deskB', 'lectern']) { const im = artImage(ed.art[k]); if (im) { art(k).image = im; art(k).needsUpdate = true; } }
     const tint = (pair, hex, wFace, wSide, k) => {
       pair[0].emissive.set(hex).lerp(col.set('#ffffff'), wFace).multiplyScalar(k);
       pair[1].emissive.set(hex).lerp(col.set('#ffffff'), wSide).multiplyScalar(k * 1.3);
     };
-    tint(led.A, ed.teamA.color, 0.42, 0.06, 0.9); tint(led.B, ed.teamB.color, 0.32, 0.03, 0.95); tint(led.cool, ed.teamA.color, 0.78, 0.45, 0.85);
-    glow.A1.color.set(ed.teamA.color); glow.A2.color.set(ed.teamA.color); glow.B1.color.set(ed.teamB.color);
-    bakeEnv();
+    // par défaut les portiques des deux côtés prennent la couleur A, sauf le portique vertical droit (B)
+    const right = ed.leds?.right === 'B' ? ed.teamB.color : ed.teamA.color;
+    tint(led.L, ed.teamA.color, 0.42, 0.06, 0.9); tint(led.R, right, 0.42, 0.06, 0.9); tint(led.RT, ed.teamB.color, 0.32, 0.03, 0.95);
+    tint(led.coolL, ed.teamA.color, 0.78, 0.45, 0.85); tint(led.coolR, right, 0.78, 0.45, 0.85);
+    glow.A1.color.set(ed.teamA.color); glow.A2.color.set(right); glow.B1.color.set(ed.teamB.color);
+    // l'environnement de reflets se capture plateau allumé
+    const keep = [room, { ...pw }]; room = 1; for (const k in pw) pw[k] = 1; applyPower(); bakeEnv();
+    room = keep[0]; Object.assign(pw, keep[1]); applyPower();
   }
 
   /* ---------- Rendu : bloom sur les LEDs ---------- */
@@ -440,11 +510,11 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   });
   function pick() {
     needPick = false; ray.setFromCamera(ptr, camera);
-    const hit = ray.intersectObjects(pickables, false)[0], name = hit ? hit.object.userData.action : null;
+    const shown = (o) => { for (; o; o = o.parent) if (!o.visible) return false; return true; };
+    const hit = ray.intersectObjects(pickables, false).find((h) => shown(h.object)), name = hit ? hit.object.userData.action : null;
     if (name === hovered) return;
     hovered = name; canvas.style.cursor = name ? 'pointer' : ''; onHover?.(name);
   }
-  const hl = {}; // action -> intensité de survol lissée
   let extHover = null;
 
   /* ---------- Hotspots HTML projetés ---------- */
@@ -452,7 +522,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   const HS = {
     trailer: V(0, WALL.y + 0.98, WALL.z + 0.05),
     teamA: tvA.localToWorld(V(0, 1.55, 0.05)), teamB: tvB.localToWorld(V(0, 1.55, 0.05)),
-    summary: V(0, 0.48, -2.0),
+    summary: V(0, 0.06, -1.75),
   };
   const v3 = new THREE.Vector3();
   function projectHotspots() {
@@ -475,31 +545,36 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
       cam.pos.lerpVectors(fly.p0, fly.p1, e); cam.target.lerpVectors(fly.q0, fly.q1, e); if (k >= 1) fly = null;
     }
     // la caméra suit légèrement le curseur
+    const tp = stepTransition(now), kick = Math.sin(tp * Math.PI) * 0.35; // léger recul de caméra pendant la transition
     const f = 1 - Math.exp(-dt * 3.2), amp = focus === 'home' ? 1 : 0.35;
     fx += (mx * amp - fx) * f; fy += (my * amp - fy) * f;
     intro += (0 - intro) * (1 - Math.exp(-dt * 1.6));
     const back = focus === 'home' ? pullBack : pullBack * 0.4;
-    camera.position.set(cam.pos.x + fx * 0.62, cam.pos.y + fy * 0.2 + intro * 0.35, cam.pos.z + back + intro * 1.6);
+    camera.position.set(cam.pos.x + fx * 0.62, cam.pos.y + fy * 0.2 + intro * 0.35, cam.pos.z + back + intro * 1.6 + kick);
     look.set(cam.target.x + fx * 0.12, cam.target.y + fy * 0.05, cam.target.z); camera.lookAt(look);
 
     if (needPick) pick();
     const active = hovered || extHover;
-    for (const k in actionMats) {
-      hl[k] = (hl[k] || 0) + ((active === k ? 1 : 0) - (hl[k] || 0)) * (1 - Math.exp(-dt * 10));
-      for (const m of actionMats[k]) { if (m.emissiveMap) m.emissiveIntensity = 1 + hl[k] * 0.45; else m.color.setScalar(1 + hl[k] * 0.45); }
-    }
+    for (const k in actionMats) hl[k] = (hl[k] || 0) + ((active === k ? 1 : 0) - (hl[k] || 0)) * (1 - Math.exp(-dt * 10));
+    applyPower();
     projectHotspots();
     lens.uniforms.time.value = (now * 0.001) % 10;
     composer.render();
   }
 
-  loadAssets().then(() => {
-    applyEdition(); ready = true; last = performance.now(); requestAnimationFrame(frame);
+  loadAssets(Object.values(EDITIONS).flatMap((e) => Object.values(e.art || {}))).then(() => {
+    applyEdition(); trans = { swapped: true, t1: performance.now() + 250 }; room = 0; for (const g in pw) pw[g] = 0; // allumage du plateau à l'arrivée
+    ready = true; last = performance.now(); requestAnimationFrame(frame);
     requestAnimationFrame(() => onReady?.());
   });
 
   return {
-    setEdition(y) { if (!EDITIONS[y]) return; edition = +y; if (ready) applyEdition(); },
+    setEdition(y) {
+      if (!EDITIONS[y]) return;
+      if (!ready) { edition = +y; return; }
+      if (+y === (trans && !trans.swapped ? trans.to : edition)) return;
+      trans = { t0: performance.now(), to: +y, swapped: false };
+    },
     view,
     hover(name) { extHover = name; },
     onClick(fn) { clickFn = fn; },

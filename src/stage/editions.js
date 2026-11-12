@@ -1,5 +1,5 @@
 /* Données par édition : DA des écrans du plateau + contenus des panneaux.
-   Seule l'édition 2026 reprend la DA réelle du plateau (photos de référence).
+   Les éditions 2025 et 2026 reprennent la DA réelle du plateau ; 2023 et 2024 sont provisoires.
    Les intervenants, résumés et trailers sont des contenus provisoires à remplacer. */
 
 const speakers = (n) => Array.from({ length: n }, (_, i) => ({
@@ -30,11 +30,18 @@ export const EDITIONS = {
   },
   2025: {
     year: 2025,
-    theme: 'Regards croisés',
-    lectern: ['Regards', 'croisés'],
+    theme: 'Quand la tradition croise la modernité',
+    lectern: ['Tradition', '× modernité'],
     date: '2025', time: 'En replay',
-    teamA: { label: 'Équipe', tag: '#1', color: '#35d6c0', speakers: speakers(3) },
-    teamB: { label: 'Équipe', tag: '#2', color: '#bfff4d', speakers: speakers(3) },
+    teamA: { label: 'Tradition', tag: '', color: '#ff8066', speakers: speakers(3) },
+    teamB: { label: 'Modernité', tag: '', color: '#58c5e3', speakers: speakers(3) },
+    // décor à façades imprimées + visuels fournis (public/assets/…)
+    set: 'printed',
+    leds: { right: 'B' }, // côté gauche aux couleurs de l'équipe A, côté droit de l'équipe B
+    art: {
+      wall: 'editions/2025/wall.webp', tvA: 'editions/2025/tv-a.webp', tvB: 'editions/2025/tv-b.webp',
+      deskA: 'editions/2025/desk-a.webp', deskB: 'editions/2025/desk-b.webp', lectern: 'editions/2025/lectern.webp',
+    },
     trailer: '',
     summary: 'Résumé de l’édition 2025 à renseigner.',
   },
