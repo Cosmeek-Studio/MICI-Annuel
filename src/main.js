@@ -222,7 +222,7 @@ const io = new IntersectionObserver((entries) => {
     el.classList.add('is-in');
     io.unobserve(el);
   });
-}, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
+}, { threshold: 0.1 }); // pas de marge basse : la dernière ligne du footer doit pouvoir entrer dans la zone observée
 $$('.reveal, [data-anim]').forEach((el) => io.observe(el));
 
 /* ---------- Parallaxe de la carte « édition 2026 » ---------- */
