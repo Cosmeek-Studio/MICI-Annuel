@@ -100,13 +100,11 @@ function setEdition(y) {
   if (String(y) !== String(year)) closeAll();
   year = +y;
   tabs.forEach((t) => { const on = t.dataset.edition === String(y); t.classList.toggle('is-active', on); t.setAttribute('aria-selected', on); });
-  // Le segment vert est centré sur l'onglet actif et court jusqu'aux onglets voisins
-  // (maquette : 207px pour un onglet de 111px + 2 × 48px).
-  const el = tabs.find((t) => t.dataset.edition === String(y));
-  const gap = parseFloat(getComputedStyle(el.parentElement).columnGap) || 0;
-  const w = el.offsetWidth + gap * 2;
-  prog.style.width = w + 'px';
-  prog.style.left = el.offsetLeft + el.offsetWidth / 2 - w / 2 - prog.parentElement.offsetLeft + 'px';
+  const el = tabs.find((t) => t.dataset.edition === String(y)), box = el.parentElement.getBoundingClientRect(), r = el.getBoundingClientRect();
+  // halo centré sur l'onglet actif, débordant de chaque côté sans dépasser la ligne
+  const gap = tabs.length > 1 ? (box.width - tabs.reduce((w, t) => w + t.offsetWidth, 0)) / (tabs.length - 1) : 0;
+  const halo = Math.max(12, Math.min(56, gap * 0.6)), l = Math.max(0, r.left - box.left - halo), rt = Math.min(box.width, r.right - box.left + halo);
+  prog.style.setProperty('--halo', halo + 'px'); prog.style.left = l + 'px'; prog.style.width = rt - l + 'px';
   stage?.setEdition(y);
 }
 tabs.forEach((t) => t.addEventListener('click', () => setEdition(t.dataset.edition)));
