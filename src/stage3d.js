@@ -1,14 +1,12 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass.js';
 import { Reflector } from 'three/examples/jsm/objects/Reflector.js';
 import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
-import { loadAssets, artImage, makeCanvas, paintWall, paintTeamTV, paintDeskPanel, paintDeskMonitor, paintLectern } from './stage/textures.js';
+import { loadAssets, loadArt, artImage, makeCanvas, paintWall, paintTeamTV, paintDeskPanel, paintDeskMonitor, paintLectern } from './stage/textures.js';
 
 /* ---------- Géométries utilitaires ---------- */
 function rrPath(p, w, h, r) {
@@ -68,7 +66,7 @@ function curtainGeo(w, h) {
   g.computeVertexNormals(); return g;
 }
 
-export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
+export function createStage(canvas, { edition: startEdition, onReady, onHotspots, onHover } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -76,6 +74,7 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   renderer.toneMappingExposure = 1.0;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false; // plateau statique : les ombres ne sont recalculées qu'au changement de décor
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
   RectAreaLightUniformsLib.init();
   // version allégée (sans reflets plans ni occlusion ambiante) sur mobile / tactile
@@ -404,8 +403,8 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     if (!trans.swapped) {
       const k = clamp01((now - trans.t0) / 380);
       room = 1 - smooth(k); for (const g in pw) pw[g] = k > 0.55 ? 0 : flicker(1 - k * 1.2);
-      if (k >= 1) { room = 0; for (const g in pw) pw[g] = 0; edition = trans.to; applyEdition(); trans.swapped = true; trans.t1 = performance.now(); }
-      return k * 0.5;
+      if (k >= 1 && trans.loaded) { room = 0; for (const g in pw) pw[g] = 0; edition = trans.to; applyEdition(); trans.swapped = true; trans.t1 = performance.now(); }
+      return k * 0.5; // reste dans le noir tant que les visuels de l'édition ne sont pas chargés
     }
     const u = (now - trans.t1) / 1000;
     for (const g in pw) pw[g] = flicker((u - ON_DELAY[g]) / 0.42);
@@ -415,14 +414,17 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   }
 
   /* ---------- Édition : repeint les écrans et reteinte les LEDs ---------- */
-  let edition = DEFAULT_EDITION;
+  let edition = EDITIONS[startEdition] ? +startEdition : DEFAULT_EDITION, dirty = true; // dirty : impose un rendu complet à la prochaine image
+  const artOf = (y) => Object.values(EDITIONS[y].art || {});
   const col = new THREE.Color();
   function applyEdition() {
     const ed = EDITIONS[edition];
-    paintWall(T.wall.c, ed); paintTeamTV(T.tvA.c, ed, 'A'); paintTeamTV(T.tvB.c, ed, 'B');
-    paintDeskPanel(T.deskA.c, ed, 'A'); paintDeskPanel(T.deskB.c, ed, 'B'); paintDeskMonitor(T.monitor.c, ed); paintLectern(T.lectern.c, ed);
-    for (const k in T) T[k].t.needsUpdate = true;
     const setName = ed.set || 'classic';
+    // seuls les écrans du décor affiché sont repeints et renvoyés au GPU
+    const painted = ['wall', 'tvA', 'tvB', 'monitor'];
+    paintWall(T.wall.c, ed); paintTeamTV(T.tvA.c, ed, 'A'); paintTeamTV(T.tvB.c, ed, 'B'); paintDeskMonitor(T.monitor.c, ed);
+    if (setName === 'classic') { paintDeskPanel(T.deskA.c, ed, 'A'); paintDeskPanel(T.deskB.c, ed, 'B'); paintLectern(T.lectern.c, ed); painted.push('deskA', 'deskB', 'lectern'); }
+    for (const k of painted) T[k].t.needsUpdate = true;
     for (const k in sets) for (const o of sets[k]) o.visible = k === setName;
     if (ed.art) for (const k of ['deskA', 'deskB', 'lectern']) { const im = artImage(ed.art[k]); if (im) { art(k).image = im; art(k).needsUpdate = true; } }
     const tint = (pair, hex, wFace, wSide, k) => {
@@ -435,19 +437,20 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     tint(led.coolL, ed.teamA.color, 0.78, 0.45, 0.85); tint(led.coolR, right, 0.78, 0.45, 0.85);
     glow.A1.color.set(ed.teamA.color); glow.A2.color.set(right); glow.B1.color.set(ed.teamB.color);
     // l'environnement de reflets se capture plateau allumé
+    renderer.shadowMap.needsUpdate = true;
     const keep = [room, { ...pw }]; room = 1; for (const k in pw) pw[k] = 1; applyPower(); bakeEnv();
-    room = keep[0]; Object.assign(pw, keep[1]); applyPower();
+    room = keep[0]; Object.assign(pw, keep[1]); applyPower(); dirty = true;
   }
 
   /* ---------- Rendu : bloom sur les LEDs ---------- */
-  const rt = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
-  const composer = new EffectComposer(renderer, rt);
-  composer.addPass(new RenderPass(scene, camera));
-  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.55, 1.12); composer.addPass(bloom);
-  composer.addPass(new OutputPass());
+  // plateau -> sceneRT (seul tampon multi-échantillonné) -> bloom -> tone mapping dans outRT -> passe « objectif » à l'écran
+  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }); sceneRT.resolveDepthBuffer = false;
+  const outRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
+  const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.55, 1.12);
+  const output = new OutputPass();
   // objectif : légère aberration chromatique, vignettage, grain
-  const lens = new ShaderPass({
-    uniforms: { tDiffuse: { value: null }, time: { value: 0 } },
+  const lens = new THREE.ShaderMaterial({
+    uniforms: { tDiffuse: { value: outRT.texture }, time: { value: 0 } },
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
     fragmentShader: `uniform sampler2D tDiffuse; uniform float time; varying vec2 vUv;
       float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233)) + time) * 43758.5453); }
@@ -459,15 +462,29 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
         gl_FragColor = vec4(c, 1.0);
       }`,
   });
-  composer.addPass(lens);
+  const lensQuad = new FullScreenQuad(lens);
+  // rendu complet du plateau, mis en cache dans outRT
+  function renderScene(dt) {
+    renderer.setRenderTarget(sceneRT); renderer.render(scene, camera);
+    bloom.render(renderer, null, sceneRT, dt, false);
+    output.render(renderer, outRT, sceneRT);
+  }
+  // passe « objectif » seule : fait vivre le grain à partir de l'image en cache
+  function present(now) {
+    lens.uniforms.time.value = (now * 0.001) % 10;
+    renderer.setRenderTarget(null); lensQuad.render(renderer);
+  }
 
   /* ---------- Cadrage ---------- */
-  const BASE_FOV = 44, REF_ASPECT = 1.75;
+  const BASE_FOV = 44, REF_ASPECT = 1.75, MAX_PIXELS = 5e6, bufSize = new THREE.Vector2();
   let pullBack = 0;
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
-    const pr = Math.min(window.devicePixelRatio, 2);
-    renderer.setPixelRatio(pr); renderer.setSize(w, h, false); composer.setPixelRatio(pr); composer.setSize(w, h);
+    // densité plafonnée à 2 et à MAX_PIXELS pixels rendus (grands écrans haute densité)
+    const pr = Math.max(Math.min(window.devicePixelRatio, 1), Math.min(window.devicePixelRatio, 2, Math.sqrt(MAX_PIXELS / (w * h))));
+    renderer.setPixelRatio(pr); renderer.setSize(w, h, false);
+    const { x: bw, y: bh } = renderer.getDrawingBufferSize(bufSize);
+    sceneRT.setSize(bw, bh); outRT.setSize(bw, bh); bloom.setSize(bw, bh); dirty = true;
     const a = w / h; camera.aspect = a;
     // garder le champ horizontal sur les écrans étroits, puis reculer
     const hHalf = Math.tan(THREE.MathUtils.degToRad(BASE_FOV / 2)) * REF_ASPECT;
@@ -542,10 +559,15 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
   new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 }).observe(canvas);
   const look = new THREE.Vector3();
 
+  // Le plateau est statique : il n'est rendu que lorsque quelque chose change (caméra, survol, transition).
+  // Le reste du temps, seule la passe « objectif » tourne (~30 i/s) pour garder le grain vivant.
+  const want = new THREE.Vector3(), lastLook = new THREE.Vector3();
+  let lastPresent = 0;
   function frame(now) {
     if (!running) return; requestAnimationFrame(frame);
     if (!visible || !ready) { last = now; return; }
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    let busy = dirty || !!fly || !!trans || intro > 1e-3;
     if (fly) {
       const k = Math.min(1, (now - fly.t0) / fly.ms), e = ease(k);
       cam.pos.lerpVectors(fly.p0, fly.p1, e); cam.target.lerpVectors(fly.q0, fly.q1, e); if (k >= 1) fly = null;
@@ -556,36 +578,49 @@ export function createStage(canvas, { onReady, onHotspots, onHover } = {}) {
     fx += (mx * amp - fx) * f; fy += (my * amp - fy) * f;
     intro += (0 - intro) * (1 - Math.exp(-dt * 1.6));
     const back = focus === 'home' ? pullBack : pullBack * 0.4;
-    camera.position.set(cam.pos.x + fx * 0.62, cam.pos.y + fy * 0.2 + intro * 0.35, cam.pos.z + back + intro * 1.6 + kick);
-    look.set(cam.target.x + fx * 0.12, cam.target.y + fy * 0.05, cam.target.z); camera.lookAt(look);
+    want.set(cam.pos.x + fx * 0.62, cam.pos.y + fy * 0.2 + intro * 0.35, cam.pos.z + back + intro * 1.6 + kick);
+    look.set(cam.target.x + fx * 0.12, cam.target.y + fy * 0.05, cam.target.z);
+    if (want.distanceToSquared(camera.position) > 9e-8 || look.distanceToSquared(lastLook) > 9e-8) busy = true;
 
     if (needPick) pick();
     const active = hovered || extHover;
-    for (const k in actionMats) hl[k] = (hl[k] || 0) + ((active === k ? 1 : 0) - (hl[k] || 0)) * (1 - Math.exp(-dt * 10));
-    applyPower();
-    projectHotspots();
-    lens.uniforms.time.value = (now * 0.001) % 10;
-    composer.render();
+    for (const k in actionMats) {
+      const d = ((active === k ? 1 : 0) - (hl[k] || 0)) * (1 - Math.exp(-dt * 10));
+      hl[k] = (hl[k] || 0) + d; if (Math.abs(d) > 1e-3) busy = true;
+    }
+    if (busy) {
+      dirty = false;
+      camera.position.copy(want); camera.lookAt(look); lastLook.copy(look);
+      applyPower();
+      projectHotspots();
+      renderScene(dt);
+    } else if (now - lastPresent < 32) return;
+    lastPresent = now; present(now);
   }
 
-  loadAssets(Object.values(EDITIONS).flatMap((e) => Object.values(e.art || {}))).then(() => {
+  (async () => {
+    // seuls les visuels de l'édition affichée sont attendus ; les autres se chargent à la demande
+    let e; do { e = edition; await loadAssets(artOf(e)); } while (e !== edition);
     applyEdition(); trans = { swapped: true, t1: performance.now() + 250 }; room = 0; for (const g in pw) pw[g] = 0; // allumage du plateau à l'arrivée
     ready = true; last = performance.now(); requestAnimationFrame(frame);
     requestAnimationFrame(() => onReady?.());
-  });
+  })();
 
   return {
     setEdition(y) {
       if (!EDITIONS[y]) return;
       if (!ready) { edition = +y; return; }
       if (+y === (trans && !trans.swapped ? trans.to : edition)) return;
-      trans = { t0: performance.now(), to: +y, swapped: false };
+      const t = trans = { t0: performance.now(), to: +y, swapped: false, loaded: false };
+      loadArt(artOf(y)).then(() => { t.loaded = true; });
     },
+    /* Précharge les visuels d'une édition (au survol de son onglet, par exemple) */
+    preload(y) { if (EDITIONS[y]) loadArt(artOf(y)); },
     view,
     hover(name) { extHover = name; },
     onClick(fn) { clickFn = fn; },
     onInteract(fn) { interactFn = fn; },
-    dispose() { running = false; pmrem.dispose(); renderer.dispose(); },
+    dispose() { running = false; pmrem.dispose(); sceneRT.dispose(); outRT.dispose(); bloom.dispose(); output.dispose(); lensQuad.dispose(); lens.dispose(); renderer.dispose(); },
     get edition() { return edition; },
   };
 }

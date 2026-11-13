@@ -4,9 +4,10 @@ const BASE = import.meta.env.BASE_URL + 'assets/';
 const FONT = '"Space Grotesk", "Helvetica Neue", Arial, sans-serif';
 const BLACK = '#0c0c0e';
 
-const assets = {};
+const assets = { art: {} }, artJobs = {};
 function loadImg(file) {
-  return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = BASE + file; });
+  // décodage hors du fil principal, pour ne pas saccader au premier dessin
+  return new Promise((res) => { const i = new Image(); i.onload = () => (i.decode ? i.decode().catch(() => {}) : Promise.resolve()).then(() => res(i)); i.onerror = () => res(null); i.src = BASE + file; });
 }
 /* Logos exportés de Figma, forcés en blanc */
 function whiten(img) {
@@ -22,12 +23,15 @@ function cover(c, img) {
   const x = c.getContext('2d'), k = Math.max(c.width / img.width, c.height / img.height), w = img.width * k, h = img.height * k;
   x.drawImage(img, (c.width - w) / 2, (c.height - h) / 2, w, h); return x;
 }
+/* Charge (une seule fois) les visuels d'une édition */
+export function loadArt(files = []) {
+  return Promise.all(files.map((f) => artJobs[f] ||= loadImg(f).then((im) => { assets.art[f] = im; })));
+}
 export async function loadAssets(artFiles = []) {
-  const files = [...new Set(artFiles)];
-  assets.art = Object.fromEntries((await Promise.all(files.map(loadImg))).map((im, i) => [files[i], im]));
-  const [mici26, challenge, celltrion] = await Promise.all(['65192.svg', '0c29f.svg', '0954c.svg'].map(loadImg));
-  Object.assign(assets, { mici26: whiten(mici26), challenge: whiten(challenge), celltrion: whiten(celltrion) });
-  await Promise.all([`500 40px ${FONT}`, `700 40px ${FONT}`].map((f) => document.fonts?.load(f).catch(() => {})));
+  const logos = Promise.all(['65192.svg', '0c29f.svg', '0954c.svg'].map(loadImg));
+  const fonts = Promise.all([`500 40px ${FONT}`, `700 40px ${FONT}`].map((f) => document.fonts?.load(f).catch(() => {})));
+  const [[mici26, challenge, celltrion]] = await Promise.all([logos, loadArt(artFiles), fonts]);
+  assets.mici26 ||= whiten(mici26); assets.challenge ||= whiten(challenge); assets.celltrion ||= whiten(celltrion);
 }
 
 export function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
