@@ -54,11 +54,16 @@ function teamHTML(ed, team) {
     <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
     <ul class="speakers">${team.speakers.map((s) => `<li><span class="speakers__avatar" style="background:${team.color}">${esc(s.name.split(' ').map((w) => w[0]).slice(0, 2).join(''))}</span><div><b>${esc(s.name)}</b><small>${esc(s.role)}</small></div></li>`).join('')}</ul>`;
 }
+function debatesHTML(list) {
+  if (!list?.length) return '';
+  return `<h4 class="debates__title">Rappel des débats</h4>
+    <ol class="debates">${list.map((d, i) => `<li><span class="debates__num">${String(i + 1).padStart(2, '0')}</span><div><b>${esc(d.q)}</b><p>${esc(d.a)}</p></div></li>`).join('')}</ol>`;
+}
 function summaryHTML(ed) {
   return `<span class="pill pill--orange">Édition ${ed.year}</span>
     <h3>${esc(ed.theme)}</h3>
     <p class="body stage-panel__meta">${esc(ed.date)} · ${esc(ed.time)}</p>
-    <p class="body">${esc(ed.summary)}</p>
+    <p class="body">${esc(ed.summary)}</p>${debatesHTML(ed.debates)}
     <a class="chip chip--lime" href="#archive">VOIR LES ARCHIVES <i>↗</i></a>`;
 }
 function teaserHTML(ed) {
@@ -76,6 +81,7 @@ function act(name) {
   if (name === 'teaser') { teaserFrame.innerHTML = teaserHTML(ed); teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
   panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
   panel.dataset.side = name === 'teamB' ? 'left' : 'right';
+  panel.classList.toggle('stage-panel--wide', name === 'summary' && !!ed.debates?.length);
   panel.hidden = false; requestAnimationFrame(() => panel.classList.add('is-open'));
 }
 function closeAll(goHome = true) {

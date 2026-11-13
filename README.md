@@ -21,7 +21,7 @@ Reproduction du plateau réel (mur LED, pupitres d'équipe, pupitre central, éc
 - Performances : three.js est chargé dans un fichier séparé, après la page. Le plateau n'est redessiné que lorsqu'il change (caméra, survol, transition) ; au repos, seul le grain de l'image est animé. Les ombres sont calculées une fois par décor, et les visuels d'une édition ne sont téléchargés qu'à son affichage (préchargés au survol de son onglet). Visuels d'écran : inutile de dépasser 1024 × 576 px pour les télés et moniteurs, 2048 px de large pour le mur et les façades.
 
 ### Contenus à renseigner
-`src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé et `teaser` (vidéo du best-of : URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo), plus `set`, `art` (visuels) et `leds` pour le décor. Les éditions 2025 et 2026 reprennent la DA réelle ; 2022 à 2024 sont provisoires.
+`src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé, `debates` (facultatif : liste `{ q, a }` affichée sous le résumé en « Rappel des débats », question et conclusion) et `teaser` (vidéo du best-of : URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo), plus `set`, `art` (visuels) et `leds` pour le décor. Les éditions 2025 et 2026 reprennent la DA réelle ; 2022 à 2024 sont provisoires.
 
 ## Structure
 - `index.html` : sections (hero, concept, cover 2026, expérience, Celltrion, archives filtrables, FAQ, liste d'envoi, footer)

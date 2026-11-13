@@ -65,7 +65,26 @@ export const EDITIONS = {
     teamB: { label: 'Équipe', tag: '#2.2', color: '#f4573b', speakers: speakers(3) },
     art: { monitor: 'editions/2026/monitor.webp' }, // télé au centre des pupitres d'équipe
     teaser: '', // URL .mp4 ou lien d'intégration YouTube/Vimeo
-    summary: 'Diagnostic, suivi, décision thérapeutique : l’intelligence artificielle s’invite dans la prise en charge des MICI. Deux équipes d’experts confrontent leurs arguments en plateau, pendant que les professionnels de santé participent en ligne et adressent leurs questions aux intervenants.',
+    summary: 'Diagnostic, suivi, décision thérapeutique : l’intelligence artificielle s’invite dans la prise en charge des MICI. Deux équipes d’experts ont confronté leurs arguments en plateau sur quatre questions, pendant que les professionnels de santé votaient en ligne et interpellaient les intervenants. Fil rouge de la soirée : l’IA ne remplace pas le gastroentérologue, elle change sa façon de travailler.',
+    // Rappel des débats : question posée en plateau et ce que la soirée en a retenu (contenus provisoires).
+    debates: [
+      {
+        q: 'L’IA, est-ce un partenaire incontournable du diagnostic et du suivi des patients ?',
+        a: 'Consensus sur son intérêt pour croiser biologie, imagerie et données remontées par les patients, et repérer plus tôt une rechute. « Incontournable » reste à démontrer : les outils doivent encore faire leurs preuves en vie réelle.',
+      },
+      {
+        q: 'Peut-on faire confiance à l’IA pour guider le diagnostic endoscopique et histologique ?',
+        a: 'Les scores automatisés d’activité séduisent par leur reproductibilité d’un centre à l’autre. La salle retient une confiance sous conditions : des algorithmes validés et explicables, et un compte rendu toujours signé par un médecin.',
+      },
+      {
+        q: 'L’IA, est-ce un assistant indispensable dans la pratique quotidienne du gastroentérologue ?',
+        a: 'Synthèse des dossiers, préparation des consultations, rédaction des comptes rendus : l’argument du temps rendu au patient a porté. Restent l’intégration aux logiciels existants, la formation des équipes et la protection des données de santé.',
+      },
+      {
+        q: 'IA et choix thérapeutique : complément ou concurrence au médecin ?',
+        a: 'Verdict quasi unanime pour le complément. L’IA peut aider à anticiper la réponse à un traitement, mais la décision se construit avec le patient, en tenant compte de son histoire, de ses priorités et de sa qualité de vie.',
+      },
+    ],
   },
 };
 
