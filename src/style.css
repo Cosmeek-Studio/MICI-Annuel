@@ -30,7 +30,7 @@
 
 *,*::before,*::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; padding-top: 80px; transition: padding-top .35s ease; background: var(--white); color: var(--neutral-900); font-family: var(--font); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body { margin: 0; padding-top: 84px; transition: padding-top .35s ease; background: var(--white); color: var(--neutral-900); font-family: var(--font); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 img { display: block; max-width: 100%; }
 a { color: inherit; text-decoration: none; }
 button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; padding: 0; }
@@ -78,7 +78,7 @@ h1,h2,h3,p,figure { margin: 0; }
 .chip--neutral { background: var(--neutral-50); color: var(--ink-60); }
 
 /* ---------- Bandeau & nav ---------- */
-.ticker { position: fixed; z-index: 50; top: 0; left: 0; right: 0; padding: 8px; display: flex; gap: 8px; transition: transform .35s ease; }
+.ticker { position: fixed; z-index: 50; top: 0; left: 0; right: 0; padding: 8px 16px; display: flex; gap: 8px; transition: transform .35s ease; }
 .ticker.is-hidden { transform: translateY(-120%); }
 .ticker__inner { flex: 1; min-width: 0; display: flex; justify-content: center; align-items: center; gap: 48px; background: var(--green-300); border-radius: var(--r4); padding: 8px 12px; color: rgba(53, 68, 26, .8); font-size: 12px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; }
 .ticker__text { display: flex; gap: 6px; }
@@ -89,9 +89,9 @@ h1,h2,h3,p,figure { margin: 0; }
 .ticker__close { width: 30px; height: 30px; background: var(--green-300); border-radius: var(--r4); display: grid; place-items: center; flex: none; }
 .ticker__close img { width: 12px; height: 12px; }
 
-.nav { position: fixed; z-index: 49; top: 46px; left: 0; right: 0; padding: 0 8px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; transition: top .35s ease; }
+.nav { position: fixed; z-index: 49; top: 46px; left: 0; right: 0; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; transition: top .35s ease; }
 .ticker.is-hidden ~ .nav { top: 8px; }
-.no-ticker body { padding-top: 42px; }
+.no-ticker body { padding-top: 46px; }
 html { scroll-padding-top: 46px; }
 .nav__logo { display: block; flex: none; border-radius: var(--r4); }
 .nav__logo img { width: 121.6px; height: 25.2042px; max-width: none; }
@@ -102,8 +102,8 @@ html { scroll-padding-top: 46px; }
 .chip--nav:hover { background: var(--green-300); color: rgba(53, 68, 26, .8); }
 
 /* ---------- Hero 3D ---------- */
-/* Maquette : 1432 × 653 sous la nav, à 4px des bords ; la hauteur suit la largeur sans dépasser l'écran */
-.hero { position: relative; margin: 0 4px; height: clamp(520px, 45.35vw, calc(100svh - 96px)); border-radius: var(--r4); background: #2a2a2e; overflow: hidden; }
+/* Maquette : 1408 × 653 à 8px sous la nav, à 16px des bords ; la hauteur suit la largeur sans dépasser l'écran */
+.hero { position: relative; margin: 0 var(--gut); height: clamp(520px, 45.35vw, calc(100svh - 96px)); border-radius: var(--r4); background: #2a2a2e; overflow: hidden; }
 #stage3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity .8s; touch-action: pan-y; }
 #stage3d.is-ready { opacity: 1; }
 .hero__vignette { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(to bottom, rgba(23,23,23,.55), transparent 22%), linear-gradient(to top, rgba(23,23,23,.45), transparent 22%); }
@@ -180,6 +180,8 @@ html { scroll-padding-top: 46px; }
 .media--sq { aspect-ratio: 1; }
 .media--tall { aspect-ratio: 340 / 425; }
 .media--sm { aspect-ratio: 340 / 272; }
+.media--mid { aspect-ratio: 340 / 249; }
+.media--wide { aspect-ratio: 340 / 191; }
 
 /* ---------- Concept ---------- */
 .concept { margin-top: var(--s112); padding-top: 16px; display: flex; flex-direction: column; gap: var(--s96); }
@@ -231,7 +233,7 @@ html { scroll-padding-top: 46px; }
 .celltrion__text { padding-right: 48px; }
 
 /* ---------- Archives ---------- */
-.archive { margin: var(--s256) auto 0; max-width: 1440px; display: flex; flex-direction: column; gap: 16px; }
+.archive { margin: var(--s192) auto 0; max-width: 1440px; display: flex; flex-direction: column; gap: 16px; }
 .archive__filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0 var(--gut); }
 .archive__label { font-size: 12px; font-weight: 500; line-height: 1.3; color: var(--ink-60); }
 .archive__pills { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -253,7 +255,8 @@ html { scroll-padding-top: 46px; }
 .card__txt--tight { gap: 4px; }
 .card__txt--cta { gap: 24px; }
 .card h3 { font-size: 16px; font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink-80); }
-.loc { display: flex; align-items: center; gap: 4px; padding: 6px 0; font-size: 16px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink-60); }
+.card .body, .card .prose { font-size: 14px; } /* maquette : textes des cartes en 14px */
+.loc { display: flex; align-items: center; gap: 4px; padding: 6px 0; font-size: 14px; line-height: 1.2; letter-spacing: -0.01em; color: var(--ink-60); }
 .loc::before { content: ""; flex: none; width: 12px; height: 12px; background: url("/assets/95e01.svg") center / 12px 12px no-repeat; }
 
 /* Vignette MICI26 : rendu Figma du visuel (les modes de fusion des calques ne se recomposent pas à l'identique dans le navigateur), logo vectoriel par-dessus */
@@ -295,9 +298,8 @@ html { scroll-padding-top: 46px; }
 .dots button:hover { opacity: .8; }
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* ---------- FAQ + prochaine édition ---------- */
-.faq-block { margin-top: var(--s256); padding-top: 16px; display: flex; flex-direction: column; gap: var(--s96); }
-.faq-block > .container { width: 100%; }
+/* ---------- FAQ ---------- */
+.faq-block { margin-top: var(--s192); padding-top: 16px; }
 .faq__panel { grid-column: span 5; padding-right: calc((100% + 16px) / 5); display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 16px; }
 .faq__visual { grid-column: span 3; aspect-ratio: 1; }
 .acc { display: flex; flex-direction: column; gap: 16px; width: 100%; }
@@ -311,9 +313,12 @@ html { scroll-padding-top: 46px; }
 .acc__a > p { overflow: hidden; padding-right: 96px; }
 .acc__item.is-open .acc__a { grid-template-rows: 1fr; padding-top: 8px; opacity: 1; }
 
-.next { padding-top: 16px; }
-.next__photo { grid-column: span 3; aspect-ratio: 1; }
-.next__panel { grid-column: span 5; background: var(--neutral-50); border-radius: var(--r4); padding: var(--s96); display: flex; flex-direction: column; justify-content: center; }
+/* ---------- Prochaine édition : liste d'envoi ---------- */
+/* Maquette : photo 518 × 350 et panneau 874 × 350, juste après l'initiative Celltrion */
+.next { margin-top: var(--s192); padding-top: 16px; }
+.next__photo { grid-column: span 3; aspect-ratio: 518 / 350; }
+.next__panel { grid-column: span 5; border-radius: var(--r4); padding: 32px var(--s96); display: flex; flex-direction: column; justify-content: center; }
+.next__inner .body, .next .newsletter input { font-size: 14px; }
 .next__inner { width: 100%; max-width: 600px; padding-right: 64px; display: flex; flex-direction: column; gap: 48px; }
 .next__form { position: relative; }
 .newsletter { display: flex; gap: 8px; }
@@ -405,11 +410,13 @@ html:not(.js) .reveal { opacity: 1; transform: none; }
   .footer__legal { flex-direction: column; gap: 12px; }
   .footer__legal div { flex-direction: column; gap: 8px; }
   .newsletter { flex-direction: column; }
+  .next__panel { padding: 24px 0 0; } /* panneau sans fond : texte aligné sur la photo */
+  .next .newsletter input { font-size: 16px; } /* évite le zoom automatique d’iOS au focus */
   .newsletter .chip { width: 100%; }
 }
 @media (max-width: 560px) {
   .archive__grid { grid-template-columns: minmax(0, 1fr); }
   .hotspot { font-size: 11px; padding: 4px 6px; }
-  .next__panel, .celltrion__panel { padding: 32px 20px; }
+  .celltrion__panel { padding: 32px 20px; }
   .cover__content { padding: 48px 16px; }
 }

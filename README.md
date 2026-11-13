@@ -1,6 +1,6 @@
 # MICI Annuel
 
-Maquette web du MICI Challenge (Figma « MICI Annuelle », nœud `2121:30`).
+Maquette web du MICI Challenge (Figma « MICI Annuelle », page de référence : nœud `2148:2`).
 Le hero est un **rendu 3D interactif du plateau** (three.js, scène procédurale inspirée du rendu de référence).
 
 ## Lancer
@@ -24,7 +24,7 @@ Reproduction du plateau réel (mur LED, pupitres d'équipe, pupitre central, éc
 `src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé, `debates` (facultatif : liste `{ q, a }` affichée sous le résumé en « Rappel des débats », question et conclusion) et `teaser` (vidéo du best-of : URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo), plus `set`, `art` (visuels) et `leds` pour le décor. Les éditions 2025 et 2026 reprennent la DA réelle ; 2022 à 2024 sont provisoires.
 
 ## Structure
-- `index.html` : sections (hero, concept, cover 2026, expérience, Celltrion, archives filtrables, FAQ, liste d'envoi, footer)
+- `index.html` : sections (hero, concept, cover 2026, expérience, Celltrion, prochaine édition / liste d’envoi `#inscription`, archives filtrables, FAQ, footer)
 - `src/stage3d.js` : scène three.js (géométrie, lumières, caméra, interactions)
 - `src/stage/textures.js` : contenu des écrans dessiné sur canvas (trames, logos, textes)
 - `src/stage/editions.js` : données par édition
@@ -45,5 +45,9 @@ Carte à plusieurs images : remplacer l'image du `.media` par un carrousel, l'in
 </figure>
 ```
 Glisser (doigt ou souris), flèches ←/→ et Début/Fin au clavier, clic sur un point ; transition coupée si `prefers-reduced-motion`.
+
+Carrousels en place : « Retour en image sur le MICI Challenge 2023 » (`retour-2023-1…4.webp`, nœud Figma `2151:1180`) et « Retour en image sur l’édition 2025 » (`retour-2025-1…6.webp`, nœud `2151:1188`).
+
+Formats d’image des cartes : `.media--sm` (340 × 272), `.media--mid` (340 × 249), `.media--wide` (340 × 191), `.media--sq`, `.media--tall` (340 × 425).
 
 > Police « TT Fors VF Trial » non incluse : à ajouter via `@font-face` (fallback Figtree/Helvetica).
