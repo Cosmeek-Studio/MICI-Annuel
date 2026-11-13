@@ -2,7 +2,6 @@ import '@fontsource/barlow-condensed/700.css';
 import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
-import { createStage } from './stage3d.js';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -31,19 +30,22 @@ function setHotspots(pos) {
   }
 }
 
-try {
+// Le moteur 3D (three.js) est chargé à part : la page s'affiche et répond sans l'attendre.
+import('./stage3d.js').then(({ createStage }) => {
   stage = createStage(canvas, {
+    edition: year,
     onReady: () => canvas.classList.add('is-ready'),
     onHotspots: setHotspots,
     onHover: (name) => { for (const [k, el] of Object.entries(hs)) el.classList.toggle('is-hover', k === name); },
   });
   stage.onInteract(() => hint.classList.add('is-hidden'));
   stage.onClick((name) => act(name));
-} catch (err) {
+  if (open) stage.view(open);
+}).catch((err) => {
   console.warn('WebGL indisponible, affichage du rendu statique.', err);
   Object.values(hs).forEach((el) => (el.hidden = true));
   hint.hidden = true;
-}
+});
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 function teamHTML(ed, team) {
@@ -107,7 +109,11 @@ function setEdition(y) {
   prog.style.setProperty('--halo', halo + 'px'); prog.style.left = l + 'px'; prog.style.width = rt - l + 'px';
   stage?.setEdition(y);
 }
-tabs.forEach((t) => t.addEventListener('click', () => setEdition(t.dataset.edition)));
+tabs.forEach((t) => {
+  t.addEventListener('click', () => setEdition(t.dataset.edition));
+  // les visuels d'une édition sont préchargés dès que son onglet est survolé ou ciblé
+  for (const ev of ['pointerenter', 'focus']) t.addEventListener(ev, () => stage?.preload(t.dataset.edition));
+});
 addEventListener('resize', () => setEdition(year));
 document.fonts?.ready.then(() => setEdition(year));
 setEdition(year);
