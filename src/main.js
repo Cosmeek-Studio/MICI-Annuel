@@ -3,6 +3,7 @@ import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
+import { initSliders } from './slider.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -122,6 +123,7 @@ setEdition(year);
 // Un ou plusieurs filtres actifs : seules les cartes correspondantes restent,
 // redistribuées dans les colonnes (la plus courte d'abord) pour ne pas laisser de trous.
 const grid = $('#archiveGrid');
+initSliders(grid); // cartes à plusieurs images : le carrousel reste attaché à sa carte quand elle change de colonne
 const cols = $$('.col', grid);
 const cards = $$('.card', grid);
 const filters = $$('.pill--filter');

@@ -28,7 +28,22 @@ Reproduction du plateau réel (mur LED, pupitres d'équipe, pupitre central, éc
 - `src/stage3d.js` : scène three.js (géométrie, lumières, caméra, interactions)
 - `src/stage/textures.js` : contenu des écrans dessiné sur canvas (trames, logos, textes)
 - `src/stage/editions.js` : données par édition
+- `src/slider.js` : carrousel des cartes de la galerie (voir ci-dessous)
 - `src/style.css` : tokens Figma (couleurs, rayons, typo TT Fors → fallback sans-serif)
 - `public/assets/` : images/SVG exportés de Figma
+
+## Galerie
+Filtres par `data-type` (`edition`, `speaker`, `photo`, combinables), cartes redistribuées dans les colonnes au filtrage (`src/main.js`, section « Galerie »).
+Carte à plusieurs images : remplacer l'image du `.media` par un carrousel, l'indicateur `.dots` est généré automatiquement.
+
+```html
+<figure class="media media--sq slider" data-slider aria-label="Photos de l’édition 2025">
+  <div class="slider__track">
+    <img src="/assets/xxx.webp" alt="" loading="lazy" />
+    <img src="/assets/yyy.webp" alt="" loading="lazy" />
+  </div>
+</figure>
+```
+Glisser (doigt ou souris), flèches ←/→ et Début/Fin au clavier, clic sur un point ; transition coupée si `prefers-reduced-motion`.
 
 > Police « TT Fors VF Trial » non incluse : à ajouter via `@font-face` (fallback Figtree/Helvetica).
