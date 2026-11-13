@@ -9,10 +9,9 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 
 /* ---------- Bandeau / nav ---------- */
 const ticker = $('#ticker');
-$('#tickerClose').addEventListener('click', () => ticker.classList.add('is-hidden'));
-const back = $('#backToStage');
-back.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); closeAll(); });
-addEventListener('scroll', () => back.classList.toggle('is-visible', scrollY > innerHeight * 0.6), { passive: true });
+// bandeau fermé : la nav et la page remontent d'autant
+$('#tickerClose').addEventListener('click', () => { ticker.classList.add('is-hidden'); document.documentElement.classList.add('no-ticker'); });
+$('#navLogo').addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); closeAll(); });
 
 /* ---------- Hero 3D ---------- */
 const canvas = $('#stage3d');
