@@ -23,6 +23,8 @@ Reproduction du plateau réel (mur LED, pupitres d'équipe, pupitre central, éc
 ### Contenus à renseigner
 `src/stage/editions.js` : par édition, thème, date, couleurs et intitulés des équipes, intervenants, résumé, `debates` (facultatif : liste `{ q, a }` affichée sous le résumé en « Rappel des débats », question et conclusion) et `teaser` (vidéo du best-of : URL `.mp4`/`.webm` ou lien d'intégration YouTube/Vimeo), plus `set`, `art` (visuels) et `leds` pour le décor. Les éditions 2025 et 2026 reprennent la DA réelle ; 2022 à 2024 sont provisoires.
 
+Intervenants : `{ name, role, city?, photo? }`. Quand tous les intervenants d’une équipe ont un `photo` (chemin sous `public/assets/`), le panneau affiche les portraits légendés de la maquette (4 de front sur desktop, 2 sur mobile) ; sinon, une liste à initiales. L’édition 2026 a ses équipes réelles (#1.1 : Vuitton, Laharie, Boschetti, Buisson ; #2.2 : Bouhnik, Roblin, Fumery, Nachury), portraits dans `public/assets/editions/2026/speakers/` (nœud Figma `2151:1218`).
+
 ## Structure
 - `index.html` : sections (hero, concept, cover 2026, expérience, Celltrion, prochaine édition / liste d’envoi `#inscription`, archives filtrables, FAQ, footer)
 - `src/stage3d.js` : scène three.js (géométrie, lumières, caméra, interactions)

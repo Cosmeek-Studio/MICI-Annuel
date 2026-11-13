@@ -133,6 +133,16 @@ html { scroll-padding-top: 46px; }
 .debates__num { display: inline-flex; align-items: center; justify-content: center; height: 28px; border-radius: var(--r4); background: var(--green-300); color: var(--neutral-900); font-size: 13px; font-weight: 500; letter-spacing: -0.02em; }
 .debates b { display: block; font-size: 16px; line-height: 1.25; letter-spacing: -0.01em; font-weight: 500; color: #fff; }
 .debates p { margin: 6px 0 0; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,.7); }
+/* Équipe avec portraits (maquette « Equipe », 2151:1218) : vignettes à légende encadrée, 4 de front sur desktop */
+.stage-panel--team { width: min(680px, calc(100% - 32px)); bottom: auto; max-height: calc(100% - 124px); }
+.team__title { font-size: 28px; }
+.team { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.team li { display: flex; flex-direction: column; min-width: 0; }
+.team img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; }
+.team div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px; border: 1px solid rgba(255,255,255,.2); border-top: 0; text-align: center; }
+.team b { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; text-transform: uppercase; color: #fff; }
+.team span { font-size: 12px; color: rgba(255,255,255,.75); }
+.team small { font-size: 12px; color: rgba(255,255,255,.5); }
 .speakers { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .speakers li { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,.07); }
 .speakers__avatar { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; color: var(--neutral-900); font-weight: 700; font-size: 14px; }
@@ -389,6 +399,7 @@ html:not(.js) .reveal { opacity: 1; transform: none; }
   .ticker__text span:not(:first-child) { display: none; }
   .nav__right .chip:not(:last-child) { display: none; }
   .stage-panel, .stage-panel[data-side="left"] { left: 12px; right: 12px; width: auto; top: auto; bottom: 92px; max-height: 60%; }
+  .team { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hotspot { font-size: 11px; padding: 5px 7px; }
   .chip--edition { font-size: 11px; padding: 6px; }
   .editions { gap: 6px; }

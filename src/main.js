@@ -48,7 +48,14 @@ import('./stage3d.js').then(({ createStage }) => {
 });
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ASSETS = import.meta.env.BASE_URL + 'assets/';
 function teamHTML(ed, team) {
+  // Avec portraits (2026) : vignettes de la maquette, légende encadrée ; sinon liste à initiales.
+  if (team.speakers.every((s) => s.photo)) {
+    return `<h3 class="team__title">L’équipe <span style="color:${team.color}">${esc(team.tag || team.label)}</span></h3>
+    <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
+    <ul class="team">${team.speakers.map((s) => `<li><img src="${ASSETS + esc(s.photo)}" alt="" width="400" height="400" /><div><b>${esc(s.name)}</b><span>${esc(s.role)}</span>${s.city ? `<small>${esc(s.city)}</small>` : ''}</div></li>`).join('')}</ul>`;
+  }
   return `<span class="pill" style="background:${team.color}">${esc(team.label)} ${esc(team.tag)}</span>
     <h3>Les intervenants</h3>
     <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
@@ -81,7 +88,9 @@ function act(name) {
   if (name === 'teaser') { teaserFrame.innerHTML = teaserHTML(ed); teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
   panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
   panel.dataset.side = name === 'teamB' ? 'left' : 'right';
+  const team = name === 'teamA' ? ed.teamA : name === 'teamB' ? ed.teamB : null;
   panel.classList.toggle('stage-panel--wide', name === 'summary' && !!ed.debates?.length);
+  panel.classList.toggle('stage-panel--team', !!team?.speakers.every((s) => s.photo));
   panel.hidden = false; requestAnimationFrame(() => panel.classList.add('is-open'));
 }
 function closeAll(goHome = true) {
