@@ -3,6 +3,7 @@ import '@fontsource/space-grotesk/500.css';
 import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
+import { initSliders } from './slider.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -18,7 +19,7 @@ const canvas = $('#stage3d');
 const hs = Object.fromEntries($$('.hotspot').map((el) => [el.dataset.action, el]));
 const hint = $('#hint');
 const panel = $('#stagePanel'), panelBody = $('#panelBody');
-const trailer = $('#trailer'), trailerFrame = $('#trailerFrame');
+const teaser = $('#teaser'), teaserFrame = $('#teaserFrame');
 let stage = null, open = null, year = DEFAULT_EDITION;
 
 function setHotspots(pos) {
@@ -47,24 +48,36 @@ import('./stage3d.js').then(({ createStage }) => {
 });
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const ASSETS = import.meta.env.BASE_URL + 'assets/';
 function teamHTML(ed, team) {
+  // Avec portraits (2026) : vignettes de la maquette, légende encadrée ; sinon liste à initiales.
+  if (team.speakers.every((s) => s.photo)) {
+    return `<h3 class="team__title">L’équipe <span style="color:${team.color}">${esc(team.tag || team.label)}</span></h3>
+    <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
+    <ul class="team">${team.speakers.map((s) => `<li><img src="${ASSETS + esc(s.photo)}" alt="" width="400" height="400" /><div><b>${esc(s.name)}</b><span>${esc(s.role)}</span>${s.city ? `<small>${esc(s.city)}</small>` : ''}</div></li>`).join('')}</ul>`;
+  }
   return `<span class="pill" style="background:${team.color}">${esc(team.label)} ${esc(team.tag)}</span>
     <h3>Les intervenants</h3>
     <p class="body">MICI Challenge ${ed.year} — ${esc(ed.theme)}</p>
     <ul class="speakers">${team.speakers.map((s) => `<li><span class="speakers__avatar" style="background:${team.color}">${esc(s.name.split(' ').map((w) => w[0]).slice(0, 2).join(''))}</span><div><b>${esc(s.name)}</b><small>${esc(s.role)}</small></div></li>`).join('')}</ul>`;
 }
+function debatesHTML(list) {
+  if (!list?.length) return '';
+  return `<h4 class="debates__title">Rappel des débats</h4>
+    <ol class="debates">${list.map((d, i) => `<li><span class="debates__num">${String(i + 1).padStart(2, '0')}</span><div><b>${esc(d.q)}</b><p>${esc(d.a)}</p></div></li>`).join('')}</ol>`;
+}
 function summaryHTML(ed) {
   return `<span class="pill pill--orange">Édition ${ed.year}</span>
     <h3>${esc(ed.theme)}</h3>
     <p class="body stage-panel__meta">${esc(ed.date)} · ${esc(ed.time)}</p>
-    <p class="body">${esc(ed.summary)}</p>
+    <p class="body">${esc(ed.summary)}</p>${debatesHTML(ed.debates)}
     <a class="chip chip--lime" href="#archive">VOIR LES ARCHIVES <i>↗</i></a>`;
 }
-function trailerHTML(ed) {
-  const src = ed.trailer;
-  if (!src) return `<div class="trailer__empty"><b>MICI Challenge ${ed.year}</b><span>Le trailer de cette édition sera bientôt disponible.</span></div>`;
+function teaserHTML(ed) {
+  const src = ed.teaser;
+  if (!src) return `<div class="teaser__empty"><b>MICI Challenge ${ed.year}</b><span>Le best-of de cette édition sera bientôt disponible.</span></div>`;
   if (/\.(mp4|webm)(\?|$)/i.test(src)) return `<video src="${esc(src)}" controls autoplay playsinline></video>`;
-  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Trailer MICI Challenge ${ed.year}"></iframe>`;
+  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Best-of MICI Challenge ${ed.year}"></iframe>`;
 }
 
 function act(name) {
@@ -72,15 +85,18 @@ function act(name) {
   if (open === name) return;
   closeAll(false);
   open = name; hint.classList.add('is-hidden'); stage?.view(name);
-  if (name === 'trailer') { trailerFrame.innerHTML = trailerHTML(ed); trailer.hidden = false; requestAnimationFrame(() => trailer.classList.add('is-open')); $('#trailerClose').focus(); return; }
+  if (name === 'teaser') { teaserFrame.innerHTML = teaserHTML(ed); teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
   panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
   panel.dataset.side = name === 'teamB' ? 'left' : 'right';
+  const team = name === 'teamA' ? ed.teamA : name === 'teamB' ? ed.teamB : null;
+  panel.classList.toggle('stage-panel--wide', name === 'summary' && !!ed.debates?.length);
+  panel.classList.toggle('stage-panel--team', !!team?.speakers.every((s) => s.photo));
   panel.hidden = false; requestAnimationFrame(() => panel.classList.add('is-open'));
 }
 function closeAll(goHome = true) {
   if (!open) return; open = null;
   panel.classList.remove('is-open'); panel.hidden = true;
-  trailer.classList.remove('is-open'); trailer.hidden = true; trailerFrame.innerHTML = '';
+  teaser.classList.remove('is-open'); teaser.hidden = true; teaserFrame.innerHTML = '';
   if (goHome) stage?.view('home');
 }
 for (const [k, el] of Object.entries(hs)) {
@@ -89,8 +105,8 @@ for (const [k, el] of Object.entries(hs)) {
   el.addEventListener('pointerleave', () => stage?.hover(null));
 }
 $('#panelClose').addEventListener('click', () => closeAll());
-$('#trailerClose').addEventListener('click', () => closeAll());
-trailer.addEventListener('click', (e) => { if (e.target === trailer) closeAll(); });
+$('#teaserClose').addEventListener('click', () => closeAll());
+teaser.addEventListener('click', (e) => { if (e.target === teaser) closeAll(); });
 panelBody.addEventListener('click', (e) => { if (e.target.closest('a')) closeAll(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 
@@ -122,6 +138,7 @@ setEdition(year);
 // Un ou plusieurs filtres actifs : seules les cartes correspondantes restent,
 // redistribuées dans les colonnes (la plus courte d'abord) pour ne pas laisser de trous.
 const grid = $('#archiveGrid');
+initSliders(grid); // cartes à plusieurs images : le carrousel reste attaché à sa carte quand elle change de colonne
 const cols = $$('.col', grid);
 const cards = $$('.card', grid);
 const filters = $$('.pill--filter');

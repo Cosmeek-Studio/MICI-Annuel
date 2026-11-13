@@ -220,7 +220,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   const WALL = { w: 5.9, h: 3.32, y: 2.0, z: -4.75 };
   {
     const mat = new THREE.MeshBasicMaterial({ map: T.wall.t });
-    const face = mesh(new THREE.PlaneGeometry(WALL.w, WALL.h), mat, 0, WALL.y, WALL.z); world.add(face); register('trailer', face, mat, 'wall');
+    const face = mesh(new THREE.PlaneGeometry(WALL.w, WALL.h), mat, 0, WALL.y, WALL.z); world.add(face); register('teaser', face, mat, 'wall');
     world.add(mesh(new THREE.BoxGeometry(WALL.w + 0.12, WALL.h + 0.12, 0.2), M.black, 0, WALL.y, WALL.z - 0.11));
     const wl = new THREE.RectAreaLight('#b9c6ff', 1.6, WALL.w, WALL.h); wl.position.set(0, WALL.y, WALL.z + 0.05); wl.rotation.y = Math.PI; world.add(wl); rectLights.push(wl);
     world.add(shadow(mesh(new THREE.BoxGeometry(7.4, 0.32, 1.3), M.shell, 0, 0.16, WALL.z - 0.1)));
@@ -498,7 +498,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   const V = (x, y, z) => new THREE.Vector3(x, y, z);
   const VIEWS = {
     home: HOME,
-    trailer: { pos: V(0, 1.85, 3.4), target: V(0, 1.95, WALL.z) },
+    teaser: { pos: V(0, 1.85, 3.4), target: V(0, 1.95, WALL.z) },
     teamA: { pos: V(-0.2, 1.55, 5.0), target: V(-3.4, 1.15, 0.7) },
     teamB: { pos: V(0.2, 1.55, 5.0), target: V(3.4, 1.15, 0.7) },
     summary: { pos: V(0, 1.25, 1.9), target: V(0, 0.85, -2.35) },
@@ -543,7 +543,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   /* ---------- Hotspots HTML projetés ---------- */
   tvA.updateMatrixWorld(); tvB.updateMatrixWorld();
   const HS = {
-    trailer: V(0, WALL.y + 0.98, WALL.z + 0.05),
+    teaser: V(0, WALL.y + 0.98, WALL.z + 0.05),
     teamA: tvA.localToWorld(V(0, 1.55, 0.05)), teamB: tvB.localToWorld(V(0, 1.55, 0.05)),
     summary: V(0, 0.06, -1.75),
   };
