@@ -1,6 +1,6 @@
 /* Données par édition : DA des écrans du plateau + contenus des panneaux.
    Les éditions 2025 et 2026 reprennent la DA réelle du plateau ; 2022 à 2024 sont provisoires.
-   Les intervenants, résumés et trailers sont des contenus provisoires à remplacer. */
+   Les intervenants, résumés et teasers sont des contenus provisoires à remplacer. */
 
 const speakers = (n) => Array.from({ length: n }, (_, i) => ({
   name: `Intervenant·e ${i + 1}`,
@@ -15,7 +15,7 @@ export const EDITIONS = {
     date: '2022', time: 'En replay',
     teamA: { label: 'Équipe', tag: '#1', color: '#9b7bff', speakers: speakers(3) },
     teamB: { label: 'Équipe', tag: '#2', color: '#ffc46b', speakers: speakers(3) },
-    trailer: '',
+    teaser: '',
     summary: 'Résumé de l’édition 2022 à renseigner.',
   },
   2023: {
@@ -25,7 +25,7 @@ export const EDITIONS = {
     date: '2023', time: 'En replay',
     teamA: { label: 'Équipe', tag: '#1', color: '#8f7bff', speakers: speakers(3) },
     teamB: { label: 'Équipe', tag: '#2', color: '#ffb066', speakers: speakers(3) },
-    trailer: '',
+    teaser: '',
     summary: 'Résumé de l’édition 2023 à renseigner.',
   },
   2024: {
@@ -35,7 +35,7 @@ export const EDITIONS = {
     date: '2024', time: 'En replay',
     teamA: { label: 'Équipe', tag: '#1', color: '#a78bfa', speakers: speakers(3) },
     teamB: { label: 'Équipe', tag: '#2', color: '#ff9958', speakers: speakers(3) },
-    trailer: '',
+    teaser: '',
     summary: 'Résumé de l’édition 2024 à renseigner.',
   },
   2025: {
@@ -53,7 +53,7 @@ export const EDITIONS = {
       deskA: 'editions/2025/desk-a.webp', deskB: 'editions/2025/desk-b.webp', lectern: 'editions/2025/lectern.webp',
       monitor: 'editions/2025/monitor.webp', // télé au centre des pupitres d'équipe
     },
-    trailer: '',
+    teaser: '',
     summary: 'Résumé de l’édition 2025 à renseigner.',
   },
   2026: {
@@ -64,7 +64,7 @@ export const EDITIONS = {
     teamA: { label: 'Équipe', tag: '#1.1', color: '#4fb9ea', speakers: speakers(3) },
     teamB: { label: 'Équipe', tag: '#2.2', color: '#f4573b', speakers: speakers(3) },
     art: { monitor: 'editions/2026/monitor.webp' }, // télé au centre des pupitres d'équipe
-    trailer: '', // URL .mp4 ou lien d'intégration YouTube/Vimeo
+    teaser: '', // URL .mp4 ou lien d'intégration YouTube/Vimeo
     summary: 'Diagnostic, suivi, décision thérapeutique : l’intelligence artificielle s’invite dans la prise en charge des MICI. Deux équipes d’experts confrontent leurs arguments en plateau, pendant que les professionnels de santé participent en ligne et adressent leurs questions aux intervenants.',
   },
 };

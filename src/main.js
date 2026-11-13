@@ -18,7 +18,7 @@ const canvas = $('#stage3d');
 const hs = Object.fromEntries($$('.hotspot').map((el) => [el.dataset.action, el]));
 const hint = $('#hint');
 const panel = $('#stagePanel'), panelBody = $('#panelBody');
-const trailer = $('#trailer'), trailerFrame = $('#trailerFrame');
+const teaser = $('#teaser'), teaserFrame = $('#teaserFrame');
 let stage = null, open = null, year = DEFAULT_EDITION;
 
 function setHotspots(pos) {
@@ -60,11 +60,11 @@ function summaryHTML(ed) {
     <p class="body">${esc(ed.summary)}</p>
     <a class="chip chip--lime" href="#archive">VOIR LES ARCHIVES <i>↗</i></a>`;
 }
-function trailerHTML(ed) {
-  const src = ed.trailer;
-  if (!src) return `<div class="trailer__empty"><b>MICI Challenge ${ed.year}</b><span>Le trailer de cette édition sera bientôt disponible.</span></div>`;
+function teaserHTML(ed) {
+  const src = ed.teaser;
+  if (!src) return `<div class="teaser__empty"><b>MICI Challenge ${ed.year}</b><span>Le teaser de cette édition sera bientôt disponible.</span></div>`;
   if (/\.(mp4|webm)(\?|$)/i.test(src)) return `<video src="${esc(src)}" controls autoplay playsinline></video>`;
-  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Trailer MICI Challenge ${ed.year}"></iframe>`;
+  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Teaser MICI Challenge ${ed.year}"></iframe>`;
 }
 
 function act(name) {
@@ -72,7 +72,7 @@ function act(name) {
   if (open === name) return;
   closeAll(false);
   open = name; hint.classList.add('is-hidden'); stage?.view(name);
-  if (name === 'trailer') { trailerFrame.innerHTML = trailerHTML(ed); trailer.hidden = false; requestAnimationFrame(() => trailer.classList.add('is-open')); $('#trailerClose').focus(); return; }
+  if (name === 'teaser') { teaserFrame.innerHTML = teaserHTML(ed); teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
   panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
   panel.dataset.side = name === 'teamB' ? 'left' : 'right';
   panel.hidden = false; requestAnimationFrame(() => panel.classList.add('is-open'));
@@ -80,7 +80,7 @@ function act(name) {
 function closeAll(goHome = true) {
   if (!open) return; open = null;
   panel.classList.remove('is-open'); panel.hidden = true;
-  trailer.classList.remove('is-open'); trailer.hidden = true; trailerFrame.innerHTML = '';
+  teaser.classList.remove('is-open'); teaser.hidden = true; teaserFrame.innerHTML = '';
   if (goHome) stage?.view('home');
 }
 for (const [k, el] of Object.entries(hs)) {
@@ -89,8 +89,8 @@ for (const [k, el] of Object.entries(hs)) {
   el.addEventListener('pointerleave', () => stage?.hover(null));
 }
 $('#panelClose').addEventListener('click', () => closeAll());
-$('#trailerClose').addEventListener('click', () => closeAll());
-trailer.addEventListener('click', (e) => { if (e.target === trailer) closeAll(); });
+$('#teaserClose').addEventListener('click', () => closeAll());
+teaser.addEventListener('click', (e) => { if (e.target === teaser) closeAll(); });
 panelBody.addEventListener('click', (e) => { if (e.target.closest('a')) closeAll(); });
 addEventListener('keydown', (e) => { if (e.key === 'Escape') closeAll(); });
 
