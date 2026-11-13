@@ -63,9 +63,9 @@ function summaryHTML(ed) {
 }
 function teaserHTML(ed) {
   const src = ed.teaser;
-  if (!src) return `<div class="teaser__empty"><b>MICI Challenge ${ed.year}</b><span>Le teaser de cette édition sera bientôt disponible.</span></div>`;
+  if (!src) return `<div class="teaser__empty"><b>MICI Challenge ${ed.year}</b><span>Le best-of de cette édition sera bientôt disponible.</span></div>`;
   if (/\.(mp4|webm)(\?|$)/i.test(src)) return `<video src="${esc(src)}" controls autoplay playsinline></video>`;
-  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Teaser MICI Challenge ${ed.year}"></iframe>`;
+  return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Best-of MICI Challenge ${ed.year}"></iframe>`;
 }
 
 function act(name) {
