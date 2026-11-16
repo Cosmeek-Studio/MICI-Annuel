@@ -81,6 +81,7 @@ export function mountPlayer(root, { src, year, theme }) {
     buf.style.transform = `scaleX(${v.buffered.end(v.buffered.length - 1) / d})`;
   }
   function meta() {
+    if (v.videoWidth && v.videoHeight) root.style.setProperty('--ar', v.videoWidth / v.videoHeight); // la fenêtre prend le format de la vidéo
     dur.textContent = fmt(v.duration); bigTime.textContent = fmt(v.duration);
     track.setAttribute('aria-valuemax', Math.floor(v.duration)); progress();
   }
@@ -153,7 +154,7 @@ export function mountPlayer(root, { src, year, theme }) {
   v.play().catch(() => paint());
 
   return () => {
-    ac.abort(); clearTimeout(idle); clearTimeout(clickT);
+    ac.abort(); clearTimeout(idle); clearTimeout(clickT); root.style.removeProperty('--ar');
     if (fsEl() === el) (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
     v.pause(); v.removeAttribute('src'); v.load(); // coupe le téléchargement en cours
   };
