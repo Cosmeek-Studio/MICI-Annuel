@@ -4,6 +4,7 @@ import '@fontsource/space-grotesk/600.css';
 import '@fontsource/space-grotesk/700.css';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
 import { initSliders } from './slider.js';
+import { mountPlayer } from './player.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -20,7 +21,7 @@ const hs = Object.fromEntries($$('.hotspot').map((el) => [el.dataset.action, el]
 const hint = $('#hint');
 const panel = $('#stagePanel'), panelBody = $('#panelBody');
 const teaser = $('#teaser'), teaserFrame = $('#teaserFrame');
-let stage = null, open = null, year = DEFAULT_EDITION;
+let stage = null, open = null, year = DEFAULT_EDITION, unmountPlayer = null;
 
 function setHotspots(pos) {
   for (const [k, el] of Object.entries(hs)) {
@@ -76,7 +77,6 @@ function summaryHTML(ed) {
 function teaserHTML(ed) {
   const src = ed.teaser;
   if (!src) return `<div class="teaser__empty"><b>MICI Challenge ${ed.year}</b><span>Le best-of de cette édition sera bientôt disponible.</span></div>`;
-  if (/\.(mp4|webm)(\?|$)/i.test(src)) return `<video src="${esc(src)}" controls autoplay playsinline></video>`;
   return `<iframe src="${esc(src)}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Best-of MICI Challenge ${ed.year}"></iframe>`;
 }
 
@@ -85,7 +85,11 @@ function act(name) {
   if (open === name) return;
   closeAll(false);
   open = name; hint.classList.add('is-hidden'); stage?.view(name);
-  if (name === 'teaser') { teaserFrame.innerHTML = teaserHTML(ed); teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
+  if (name === 'teaser') {
+    // fichier vidéo (.mp4/.webm, Dropbox compris) : lecteur maison ; sinon intégration YouTube/Vimeo
+    if (/\.(mp4|webm)(\?|$)/i.test(ed.teaser || '')) unmountPlayer = mountPlayer(teaserFrame, { src: ed.teaser, year: ed.year, theme: ed.theme });
+    else teaserFrame.innerHTML = teaserHTML(ed);
+    teaser.hidden = false; requestAnimationFrame(() => teaser.classList.add('is-open')); $('#teaserClose').focus(); return; }
   panelBody.innerHTML = name === 'summary' ? summaryHTML(ed) : teamHTML(ed, name === 'teamA' ? ed.teamA : ed.teamB);
   panel.dataset.side = name === 'teamB' ? 'left' : 'right';
   const team = name === 'teamA' ? ed.teamA : name === 'teamB' ? ed.teamB : null;
@@ -96,7 +100,7 @@ function act(name) {
 function closeAll(goHome = true) {
   if (!open) return; open = null;
   panel.classList.remove('is-open'); panel.hidden = true;
-  teaser.classList.remove('is-open'); teaser.hidden = true; teaserFrame.innerHTML = '';
+  teaser.classList.remove('is-open'); teaser.hidden = true; unmountPlayer?.(); unmountPlayer = null; teaserFrame.innerHTML = '';
   if (goHome) stage?.view('home');
 }
 for (const [k, el] of Object.entries(hs)) {
