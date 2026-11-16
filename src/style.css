@@ -179,8 +179,6 @@ html { scroll-padding-top: 46px; }
 .intro__title { width: 100%; height: auto; }
 .intro__body { display: flex; flex-direction: column; align-items: center; gap: 24px; }
 .intro__body .body { max-width: 410px; }
-.scroll-line { display: flex; align-items: center; }
-.scroll-line span { flex: 1; height: 4px; background: var(--green-300); }
 
 /* ---------- Médias ---------- */
 .media { position: relative; overflow: hidden; border-radius: var(--r4); background: var(--neutral-50); }
