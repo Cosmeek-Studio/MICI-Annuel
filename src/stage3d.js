@@ -79,6 +79,10 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   RectAreaLightUniformsLib.init();
   // version allégée (sans reflets plans ni occlusion ambiante) sur mobile / tactile
   const lite = matchMedia('(max-width: 760px), (pointer: coarse)').matches;
+  // petits détails (roulettes, câbles, gril, accessoires…) : vus par la caméra mais exclus du reflet du sol,
+  // qui est trop flou pour les montrer (la caméra du reflet ne voit que le calque 0)
+  const DETAIL = 2;
+  const detail = (o) => { o.traverse((m) => m.layers.set(DETAIL)); return o; };
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color('#030304');
@@ -87,7 +91,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   const baseEnv = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environment = baseEnv; scene.environmentIntensity = 0.3;
   const cubeRT = new THREE.WebGLCubeRenderTarget(256, { type: THREE.HalfFloatType });
-  const cubeCam = new THREE.CubeCamera(0.1, 60, cubeRT); cubeCam.position.set(0, 1.3, 1.2); cubeCam.layers.enable(1);
+  const cubeCam = new THREE.CubeCamera(0.1, 60, cubeRT); cubeCam.position.set(0, 1.3, 1.2); cubeCam.layers.enable(1); cubeCam.layers.enable(DETAIL);
   // boîte à lumière du gril, visible uniquement dans les reflets (calque 1)
   const softbox = new THREE.Mesh(new THREE.PlaneGeometry(13, 11), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.8, 0.8, 0.85) }));
   softbox.rotation.x = Math.PI / 2; softbox.position.set(0, 6.5, 1.5); softbox.layers.set(1); scene.add(softbox);
@@ -99,7 +103,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     scene.environment = rtEnv.texture; scene.environmentIntensity = 1;
   }
 
-  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80);
+  const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 80); camera.layers.enable(DETAIL);
   const HOME = { pos: new THREE.Vector3(0, 2.2, 8.3), target: new THREE.Vector3(0, 1.2, -2.4) };
   const cam = { pos: HOME.pos.clone(), target: HOME.target.clone() };
 
@@ -149,13 +153,13 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   scene.add(...Object.values(glow));
 
   /* ---------- Sol, rideaux ---------- */
-  const floor = shadow(mesh(new THREE.PlaneGeometry(26, 22), M.floor, 0, 0, 1), false); floor.rotation.x = -Math.PI / 2; world.add(floor);
+  const floor = shadow(mesh(new THREE.PlaneGeometry(26, 22), M.floor, 0, 0, 1), false); floor.rotation.x = -Math.PI / 2; world.add(detail(floor));
   world.add(mesh(curtainGeo(26, 9), M.curtain, 0, 4.5, -5.75));
   for (const sd of [-1, 1]) { const w = mesh(curtainGeo(22, 9), M.curtain, sd * 8.2, 4.5, 1); w.rotation.y = -sd * Math.PI / 2; world.add(w); }
   // reflet plan flouté du plateau dans le sol (fresnel + grain)
   if (!lite) {
     mirror = new Reflector(new THREE.PlaneGeometry(26, 22), {
-      textureWidth: 1024, textureHeight: 512, multisample: 0, clipBias: 0.003,
+      textureWidth: 512, textureHeight: 256, // lu flouté (niveaux de mipmap 2 à 4) : une définition plus haute ne se voit pas multisample: 0, clipBias: 0.003,
       shader: {
         uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tNoise: { value: grain.floorR } },
         vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
@@ -183,22 +187,22 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   })();
   const contact = (w, d, x, z, ry = 0, o = 0.6) => {
     const m = mesh(new THREE.PlaneGeometry(w * 1.94 + 0.25, d * 1.94 + 0.7), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: o, depthWrite: false, color: '#000' }), x, 0.004, z);
-    m.rotation.set(-Math.PI / 2, 0, ry); m.renderOrder = 2; world.add(m); return m;
+    m.rotation.set(-Math.PI / 2, 0, ry); m.renderOrder = 2; world.add(detail(m)); return m;
   };
   // câbles au sol
-  const cable = (pts, r = 0.011) => world.add(shadow(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, r, z))), 48, r, 6), M.rubber)));
+  const cable = (pts, r = 0.011) => world.add(detail(shadow(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, r, z))), 48, r, 6), M.rubber))));
   cable([[-2.3, 0.2], [-3.4, -0.4], [-4.6, 0.1], [-5.6, -0.6], [-7.6, -0.9]]);
   cable([[3.0, 1.2], [3.6, 0.2], [4.9, 0.3], [5.7, -0.7], [7.6, -1.1]]);
   cable([[3.2, 1.25], [3.9, 0.5], [4.7, 0.9], [6.2, 0.2], [7.6, 0.3]], 0.008);
   cable([[0.3, -2.5], [0.9, -3.1], [0.5, -3.6], [1.2, -3.95]], 0.009);
   // gril technique : tubes et projecteurs éteints
-  for (const z of [-2.6, 0.6, 3.6]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 16, 8), M.black, 0, 4.75, z); p.rotation.z = Math.PI / 2; world.add(p); }
-  for (const x of [-5, -1.7, 1.7, 5]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 10, 8), M.black, x, 4.8, 0.5); p.rotation.x = Math.PI / 2; world.add(p); }
+  for (const z of [-2.6, 0.6, 3.6]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 16, 8), M.black, 0, 4.75, z); p.rotation.z = Math.PI / 2; world.add(detail(p)); }
+  for (const x of [-5, -1.7, 1.7, 5]) { const p = mesh(new THREE.CylinderGeometry(0.025, 0.025, 10, 8), M.black, x, 4.8, 0.5); p.rotation.x = Math.PI / 2; world.add(detail(p)); }
   for (const [x, z, ry] of [[-4.2, -2.6, 0.5], [-1.2, -2.6, 0.1], [1.4, -2.6, -0.1], [4.3, -2.6, -0.5], [-2.8, 0.6, 0.3], [2.6, 0.6, -0.3]]) {
     const g = new THREE.Group(); g.position.set(x, 4.5, z); g.rotation.set(0.9, ry, 0);
     g.add(mesh(new THREE.BoxGeometry(0.22, 0.26, 0.3), M.black), mesh(new THREE.BoxGeometry(0.3, 0.02, 0.02), M.black, 0, 0.16, 0));
     const lens = mesh(new THREE.CircleGeometry(0.08, 20), new THREE.MeshStandardMaterial({ color: '#20232a', roughness: 0.1, metalness: 0.8 }), 0, 0, 0.151); g.add(lens);
-    world.add(g);
+    world.add(detail(g));
   }
 
   /* ---------- Textures d'écran ---------- */
@@ -232,7 +236,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.set(0, ry, rz);
     g.add(mesh(new THREE.BoxGeometry(len, 0.07, 0.16), M.ledWhite), mesh(new THREE.BoxGeometry(len + 0.04, 0.1, 0.2), M.black, 0, 0.085, 0));
     const l = new THREE.RectAreaLight('#f4f7ff', 11, len, 0.3); l.rotation.x = -Math.PI / 2; l.position.y = -0.04; g.add(l); rectLights.push(l);
-    for (const dx of [-len * 0.35, len * 0.35]) g.add(mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.2, 4), M.black, dx, 0.7, 0));
+    for (const dx of [-len * 0.35, len * 0.35]) g.add(detail(mesh(new THREE.CylinderGeometry(0.004, 0.004, 1.2, 4), M.black, dx, 0.7, 0)));
     world.add(g);
   };
   bar(6.0, 0, 4.0, -4.1);
@@ -246,7 +250,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const fill = panelGeo((p) => rrPath(p, W - 2 * t, H - 2 * t, R - t * 0.7), W, H);
     [[-s * 0.2, -0.2, 0.06], [s * 0.2, 0.2, -0.06]].forEach(([x, y, z]) => {
       g.add(mesh(geo, M.ledWhite, x, y, z), mesh(fill, M.frameFill, x, y, z));
-      for (const dx of [-0.35, 0.35]) g.add(mesh(new THREE.CylinderGeometry(0.004, 0.004, 3, 4), M.black, x + dx, y + H / 2 + 1.5, z));
+      for (const dx of [-0.35, 0.35]) g.add(detail(mesh(new THREE.CylinderGeometry(0.004, 0.004, 3, 4), M.black, x + dx, y + H / 2 + 1.5, z)));
     });
     world.add(g);
   }
@@ -281,7 +285,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   for (const s of [-1, 1]) {
     const g = new THREE.Group(); g.position.set(s * 3.05, 0, -3.55); g.rotation.y = -s * 0.25;
     g.add(shadow(mesh(new THREE.BoxGeometry(0.85, 1.62, 0.5), M.grey, 0, 0.81, 0)));
-    for (const dx of [-0.2, 0.2]) { const c = ptz(); c.position.set(dx, 1.62, 0.02); c.rotation.y = -s * 0.2; g.add(c); }
+    for (const dx of [-0.2, 0.2]) { const c = ptz(); c.position.set(dx, 1.62, 0.02); c.rotation.y = -s * 0.2; g.add(detail(c)); }
     world.add(g);
   }
 
@@ -299,17 +303,17 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const monMat = glass(T.monitor.t), mon = mesh(new THREE.PlaneGeometry(mw, mh), monMat, 0, cy, mz + 0.053); g.add(mon);
     // roulettes
     for (const x of [-1.35, -0.45, 0.45, 1.35]) for (const z of [-0.22, 0.22]) {
-      const w = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 14), M.black, x, 0.045, z); w.rotation.x = Math.PI / 2; g.add(w);
-      g.add(mesh(new THREE.BoxGeometry(0.05, 0.03, 0.05), M.metal, x, 0.1, z));
+      const w = mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.04, 14), M.black, x, 0.045, z); w.rotation.x = Math.PI / 2; g.add(detail(w));
+      g.add(detail(mesh(new THREE.BoxGeometry(0.05, 0.03, 0.05), M.metal, x, 0.1, z)));
     }
     // joints d'assemblage de la coque
     for (const x of [0, -L / 2 + R, L / 2 - R]) {
-      g.add(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, x, 0.1 + H + 0.0005, 0), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + H - t / 2, D / 2), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + t / 2, D / 2));
+      g.add(...[mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, x, 0.1 + H + 0.0005, 0), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + H - t / 2, D / 2), mesh(new THREE.BoxGeometry(0.005, t, 0.003), M.seam, x, 0.1 + t / 2, D / 2)].map(detail));
     }
     // sur le plateau : feuille, stylo, télécommande
     const top = 0.1 + H;
-    g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, top + 0.003, 0.02));
-    g.add(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, top + 0.012, 0.05));
+    g.add(detail(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, top + 0.003, 0.02)));
+    g.add(detail(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, top + 0.012, 0.05)));
     register('team' + side, panel, panelMat); register('team' + side, mon, monMat, 'desk' + side);
     g.traverse((o) => { if (o.isMesh && !o.userData.action) register('team' + side, o); });
     return g;
@@ -343,7 +347,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const mat = glass(T.lectern.t, 0.3), face = mesh(panelGeo(inner, W - 2 * t, H - 2 * t), mat, 0, cy, D / 2 - 0.05); lectern.add(face);
     const bk = mesh(panelGeo(inner, W - 2 * t, H - 2 * t), M.greyDark, 0, cy, -D / 2 + 0.05); bk.rotation.y = Math.PI; lectern.add(bk);
     for (const x of [-0.5, 0.5]) lectern.add(shadow(mesh(new THREE.BoxGeometry(0.07, 0.18, D * 0.9), M.shell, x, 0.09, 0)));
-    lectern.add(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, 0.05, 0.16 + H + 0.012, 0.05));
+    lectern.add(detail(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, 0.05, 0.16 + H + 0.012, 0.05)));
     register('summary', face, mat, 'lectern');
     lectern.traverse((o) => { if (o.isMesh && !o.userData.action) register('summary', o); });
     place(lectern, 0, -2.35, 0); sets.classic.push(lectern);
@@ -360,8 +364,8 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const face = mesh(panelGeo(inner, L - 2 * t, H - 2 * t), mat, 0, cy, D / 2 - 0.022); g.add(face);
     const bk = mesh(panelGeo(inner, L - 2 * t, H - 2 * t), M.greyDark, 0, cy, -D / 2 + 0.05); bk.rotation.y = Math.PI; g.add(bk);
     g.add(shadow(mesh(new THREE.BoxGeometry(plinthW, base, D * 0.8), M.shell, 0, base / 2, 0)));
-    g.add(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, 0, base + H + 0.0005, 0));
-    g.add(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, base + H + 0.003, 0.02), mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, base + H + 0.012, 0.05));
+    g.add(detail(mesh(new THREE.BoxGeometry(0.005, 0.003, D - 0.02), M.seam, 0, base + H + 0.0005, 0)));
+    g.add(detail(mesh(new THREE.BoxGeometry(0.3, 0.004, 0.21), M.paper, 0.15, base + H + 0.003, 0.02)), detail(mesh(new THREE.BoxGeometry(0.16, 0.022, 0.045), M.black, -0.12, base + H + 0.012, 0.05)));
     register(action, face, mat, key, 0.45);
     if (withMonitor) { // télé encastrée au centre de la façade
       const mw = 1.42, mh = 0.8, mz = D / 2 - 0.022;
@@ -444,8 +448,13 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
 
   /* ---------- Rendu : bloom sur les LEDs ---------- */
   // plateau -> sceneRT (seul tampon multi-échantillonné) -> bloom -> tone mapping dans outRT -> passe « objectif » à l'écran
-  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 }); sceneRT.resolveDepthBuffer = false;
+  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 2 }); sceneRT.resolveDepthBuffer = false;
   const outRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
+  // jeu de tampons réduit pour les images en mouvement (caméra qui suit le curseur, déplacements, transitions) :
+  // environ la moitié des pixels, sans multi-échantillonnage ; l'image nette est recalculée dès que la caméra s'arrête
+  const MOTION_SCALE = 0.7;
+  const sceneLo = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
+  const outLo = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.55, 1.12);
   const output = new OutputPass();
   // objectif : légère aberration chromatique, vignettage, grain
@@ -464,10 +473,12 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   });
   const lensQuad = new FullScreenQuad(lens);
   // rendu complet du plateau, mis en cache dans outRT
-  function renderScene(dt) {
-    renderer.setRenderTarget(sceneRT); renderer.render(scene, camera);
-    bloom.render(renderer, null, sceneRT, dt, false);
-    output.render(renderer, outRT, sceneRT);
+  function renderScene(dt, moving = false) {
+    const src = moving ? sceneLo : sceneRT, dst = moving ? outLo : outRT;
+    renderer.setRenderTarget(src); renderer.render(scene, camera);
+    bloom.render(renderer, null, src, dt, false); // le bloom lit sa source en coordonnées normalisées : un seul jeu pour les deux définitions
+    output.render(renderer, dst, src);
+    lens.uniforms.tDiffuse.value = dst.texture;
   }
   // passe « objectif » seule : fait vivre le grain à partir de l'image en cache
   function present(now) {
@@ -476,7 +487,9 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   }
 
   /* ---------- Cadrage ---------- */
-  const BASE_FOV = 44, REF_ASPECT = 1.75, MAX_PIXELS = 5e6, bufSize = new THREE.Vector2();
+  const BASE_FOV = 44, REF_ASPECT = 1.75, MAX_PIXELS = 2.5e6, bufSize = new THREE.Vector2();
+  // bloom calculé à demi-définition : il ne produit que des halos flous
+  const BLOOM_RES = (n) => Math.max(1, Math.round(n / 2));
   let pullBack = 0;
   function resize() {
     const w = canvas.clientWidth, h = canvas.clientHeight; if (!w || !h) return;
@@ -484,7 +497,9 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const pr = Math.max(Math.min(window.devicePixelRatio, 1), Math.min(window.devicePixelRatio, 2, Math.sqrt(MAX_PIXELS / (w * h))));
     renderer.setPixelRatio(pr); renderer.setSize(w, h, false);
     const { x: bw, y: bh } = renderer.getDrawingBufferSize(bufSize);
-    sceneRT.setSize(bw, bh); outRT.setSize(bw, bh); bloom.setSize(bw, bh); dirty = true;
+    sceneRT.setSize(bw, bh); outRT.setSize(bw, bh); dirty = true;
+    const lw = Math.round(bw * MOTION_SCALE), lh = Math.round(bh * MOTION_SCALE); sceneLo.setSize(lw, lh); outLo.setSize(lw, lh);
+    bloom.setSize(BLOOM_RES(bw), BLOOM_RES(bh));
     const a = w / h; camera.aspect = a;
     // garder le champ horizontal sur les écrans étroits, puis reculer
     const hHalf = Math.tan(THREE.MathUtils.degToRad(BASE_FOV / 2)) * REF_ASPECT;
@@ -511,7 +526,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   }
 
   /* ---------- Pointeur : suivi caméra, survol, clic ---------- */
-  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(-9, -9);
+  const ray = new THREE.Raycaster(), ptr = new THREE.Vector2(-9, -9); ray.layers.enable(DETAIL);
   let mx = 0, my = 0, fx = 0, fy = 0, hovered = null, needPick = false, downAt = null, clickFn = null, interactFn = null;
   const setPtr = (e) => {
     const r = canvas.getBoundingClientRect();
@@ -562,7 +577,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   // Le plateau est statique : il n'est rendu que lorsque quelque chose change (caméra, survol, transition).
   // Le reste du temps, seule la passe « objectif » tourne (~30 i/s) pour garder le grain vivant.
   const want = new THREE.Vector3(), lastLook = new THREE.Vector3();
-  let lastPresent = 0;
+  let lastPresent = 0, sharp = false;
   function frame(now) {
     if (!running) return; requestAnimationFrame(frame);
     if (!visible || !ready) { last = now; return; }
@@ -580,7 +595,8 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     const back = focus === 'home' ? pullBack : pullBack * 0.4;
     want.set(cam.pos.x + fx * 0.62, cam.pos.y + fy * 0.2 + intro * 0.35, cam.pos.z + back + intro * 1.6 + kick);
     look.set(cam.target.x + fx * 0.12, cam.target.y + fy * 0.05, cam.target.z);
-    if (want.distanceToSquared(camera.position) > 9e-8 || look.distanceToSquared(lastLook) > 9e-8) busy = true;
+    const moving = !!fly || want.distanceToSquared(camera.position) > 9e-8 || look.distanceToSquared(lastLook) > 9e-8;
+    if (moving) busy = true;
 
     if (needPick) pick();
     const active = hovered || extHover;
@@ -593,8 +609,9 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
       camera.position.copy(want); camera.lookAt(look); lastLook.copy(look);
       applyPower();
       projectHotspots();
-      renderScene(dt);
-    } else if (now - lastPresent < 32) return;
+      renderScene(dt, moving); sharp = !moving;
+    } else if (!sharp) { renderScene(dt); sharp = true; } // la caméra vient de s'arrêter : image nette
+    else if (now - lastPresent < 32) return;
     lastPresent = now; present(now);
   }
 
@@ -620,7 +637,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     hover(name) { extHover = name; },
     onClick(fn) { clickFn = fn; },
     onInteract(fn) { interactFn = fn; },
-    dispose() { running = false; pmrem.dispose(); sceneRT.dispose(); outRT.dispose(); bloom.dispose(); output.dispose(); lensQuad.dispose(); lens.dispose(); renderer.dispose(); },
+    dispose() { running = false; pmrem.dispose(); sceneRT.dispose(); outRT.dispose(); sceneLo.dispose(); outLo.dispose(); bloom.dispose(); output.dispose(); lensQuad.dispose(); lens.dispose(); renderer.dispose(); },
     get edition() { return edition; },
   };
 }
