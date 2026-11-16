@@ -229,7 +229,7 @@ function splitWords(el) {
   walk(el);
 }
 $$('main h2').forEach((el) => { el.dataset.anim = 'words'; splitWords(el); });
-$$('main .pill:not(.pill--filter), main .body, main .card h3, main .loc, main a.chip, .scroll-line .chip, .newsletter, .archive__filters, .acc__item, .footer__card, .footer__legal')
+$$('main .pill:not(.pill--filter), main .body, main .card h3, main .loc, main a.chip, .newsletter, .archive__filters, .acc__item, .footer__card, .footer__legal')
   .filter((el) => !el.closest('.acc__a'))
   .forEach((el) => { el.dataset.anim = 'up'; });
 
