@@ -81,7 +81,7 @@ export const EDITIONS = {
       ],
     },
     art: { monitor: 'editions/2026/monitor.webp' }, // télé au centre des pupitres d'équipe
-    teaser: '', // URL .mp4 ou lien d'intégration YouTube/Vimeo
+    teaser: 'https://www.dropbox.com/scl/fi/skhoyck59uz3uod2y0dl9/5.3CELLTRION-_-BEST-OF-MICI26_1080p.mp4?rlkey=59ei7ub1t30xpjd8vhw6qpolj&raw=1', // Dropbox : raw=1 pour lire le fichier directement
     summary: 'Diagnostic, suivi, décision thérapeutique : l’intelligence artificielle s’invite dans la prise en charge des MICI. Deux équipes d’experts ont confronté leurs arguments en plateau sur quatre questions, pendant que les professionnels de santé votaient en ligne et interpellaient les intervenants. Fil rouge de la soirée : l’IA ne remplace pas le gastroentérologue, elle change sa façon de travailler.',
     // Rappel des débats : question posée en plateau et ce que la soirée en a retenu (contenus provisoires).
     debates: [
