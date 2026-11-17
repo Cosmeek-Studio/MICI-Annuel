@@ -156,10 +156,11 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   const floor = shadow(mesh(new THREE.PlaneGeometry(26, 22), M.floor, 0, 0, 1), false); floor.rotation.x = -Math.PI / 2; world.add(detail(floor));
   world.add(mesh(curtainGeo(26, 9), M.curtain, 0, 4.5, -5.75));
   for (const sd of [-1, 1]) { const w = mesh(curtainGeo(22, 9), M.curtain, sd * 8.2, 4.5, 1); w.rotation.y = -sd * Math.PI / 2; world.add(w); }
-  // reflet plan flouté du plateau dans le sol (fresnel + grain)
+  // reflet plan flouté du plateau dans le sol : discret, surtout visible en vue rasante
   if (!lite) {
     mirror = new Reflector(new THREE.PlaneGeometry(26, 22), {
-      textureWidth: 512, textureHeight: 256, // lu flouté (niveaux de mipmap 2 à 4) : une définition plus haute ne se voit pas multisample: 0, clipBias: 0.003,
+      // lu flouté (niveaux de mipmap 2 à 4) : une définition plus haute ne se voit pas
+      textureWidth: 512, textureHeight: 256, multisample: 0, clipBias: 0.003,
       shader: {
         uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null }, tNoise: { value: grain.floorR } },
         vertexShader: `uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
@@ -168,10 +169,10 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
           void main() {
             vec3 V = normalize(cameraPosition - vW);
             float n = texture2D(tNoise, vW.xz * 0.27).r;
-            float fres = 0.05 + 0.95 * pow(1.0 - clamp(V.y, 0.0, 1.0), 4.5);
-            vec4 uv = vUv; uv.xy += (n - 0.33) * 0.03 * uv.w;
-            vec3 r = textureProj(tDiffuse, uv, 2.2 + n * 3.0).rgb * 0.5 + textureProj(tDiffuse, uv, 4.2).rgb * 0.5;
-            gl_FragColor = vec4(r, clamp(fres * (1.3 - n * 1.5), 0.0, 0.6));
+            float fres = 0.02 + 0.98 * pow(1.0 - clamp(V.y, 0.0, 1.0), 5.0);
+            vec4 uv = vUv; uv.xy += (n - 0.33) * 0.02 * uv.w;
+            vec3 r = textureProj(tDiffuse, uv, 3.0 + n * 2.0).rgb * 0.5 + textureProj(tDiffuse, uv, 4.5).rgb * 0.5;
+            gl_FragColor = vec4(r, clamp(fres * (1.1 - n * 0.9), 0.0, 0.26));
           }`,
       },
     });
@@ -448,46 +449,35 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
 
   /* ---------- Rendu : bloom sur les LEDs ---------- */
   // plateau -> sceneRT (seul tampon multi-échantillonné) -> bloom -> tone mapping dans outRT -> passe « objectif » à l'écran
-  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 2 }); sceneRT.resolveDepthBuffer = false;
+  // même définition et même anti-crénelage que la caméra bouge ou non : pas de saut de netteté à l'arrêt
+  const sceneRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: lite ? 2 : 4 }); sceneRT.resolveDepthBuffer = false;
   const outRT = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
-  // jeu de tampons réduit pour les images en mouvement (caméra qui suit le curseur, déplacements, transitions) :
-  // environ la moitié des pixels, sans multi-échantillonnage ; l'image nette est recalculée dès que la caméra s'arrête
-  const MOTION_SCALE = 0.7;
-  const sceneLo = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType });
-  const outLo = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, depthBuffer: false });
   const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.22, 0.55, 1.12);
   const output = new OutputPass();
-  // objectif : légère aberration chromatique, vignettage, grain
+  // objectif : légère aberration chromatique, vignettage
   const lens = new THREE.ShaderMaterial({
-    uniforms: { tDiffuse: { value: outRT.texture }, time: { value: 0 } },
+    uniforms: { tDiffuse: { value: outRT.texture } },
     vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-    fragmentShader: `uniform sampler2D tDiffuse; uniform float time; varying vec2 vUv;
-      float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233)) + time) * 43758.5453); }
+    fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
       void main() {
-        vec2 d = vUv - 0.5; float r2 = dot(d, d); vec2 o = d * r2 * 0.011;
+        vec2 d = vUv - 0.5; float r2 = dot(d, d); vec2 o = d * r2 * 0.006;
         vec3 c = vec3(texture2D(tDiffuse, vUv - o).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv + o).b);
         c *= 1.0 - r2 * 0.5;
-        c += (h(gl_FragCoord.xy) - 0.5) * 0.04 * (1.0 - 0.5 * dot(c, vec3(0.333)));
+        // tramage fixe d'un demi-niveau : invisible, évite les bandes dans les dégradés sombres
+        c += (fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) - 0.5) / 255.0;
         gl_FragColor = vec4(c, 1.0);
       }`,
   });
   const lensQuad = new FullScreenQuad(lens);
-  // rendu complet du plateau, mis en cache dans outRT
-  function renderScene(dt, moving = false) {
-    const src = moving ? sceneLo : sceneRT, dst = moving ? outLo : outRT;
-    renderer.setRenderTarget(src); renderer.render(scene, camera);
-    bloom.render(renderer, null, src, dt, false); // le bloom lit sa source en coordonnées normalisées : un seul jeu pour les deux définitions
-    output.render(renderer, dst, src);
-    lens.uniforms.tDiffuse.value = dst.texture;
-  }
-  // passe « objectif » seule : fait vivre le grain à partir de l'image en cache
-  function present(now) {
-    lens.uniforms.time.value = (now * 0.001) % 10;
+  function renderScene(dt) {
+    renderer.setRenderTarget(sceneRT); renderer.render(scene, camera);
+    bloom.render(renderer, null, sceneRT, dt, false);
+    output.render(renderer, outRT, sceneRT);
     renderer.setRenderTarget(null); lensQuad.render(renderer);
   }
 
   /* ---------- Cadrage ---------- */
-  const BASE_FOV = 44, REF_ASPECT = 1.75, MAX_PIXELS = 2.5e6, bufSize = new THREE.Vector2();
+  const BASE_FOV = 44, REF_ASPECT = 1.75, MAX_PIXELS = lite ? 2.5e6 : 4.5e6, bufSize = new THREE.Vector2();
   // bloom calculé à demi-définition : il ne produit que des halos flous
   const BLOOM_RES = (n) => Math.max(1, Math.round(n / 2));
   let pullBack = 0;
@@ -498,7 +488,6 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     renderer.setPixelRatio(pr); renderer.setSize(w, h, false);
     const { x: bw, y: bh } = renderer.getDrawingBufferSize(bufSize);
     sceneRT.setSize(bw, bh); outRT.setSize(bw, bh); dirty = true;
-    const lw = Math.round(bw * MOTION_SCALE), lh = Math.round(bh * MOTION_SCALE); sceneLo.setSize(lw, lh); outLo.setSize(lw, lh);
     bloom.setSize(BLOOM_RES(bw), BLOOM_RES(bh));
     const a = w / h; camera.aspect = a;
     // garder le champ horizontal sur les écrans étroits, puis reculer
@@ -575,9 +564,8 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
   const look = new THREE.Vector3();
 
   // Le plateau est statique : il n'est rendu que lorsque quelque chose change (caméra, survol, transition).
-  // Le reste du temps, seule la passe « objectif » tourne (~30 i/s) pour garder le grain vivant.
+  // Le reste du temps, rien n'est redessiné.
   const want = new THREE.Vector3(), lastLook = new THREE.Vector3();
-  let lastPresent = 0, sharp = false;
   function frame(now) {
     if (!running) return; requestAnimationFrame(frame);
     if (!visible || !ready) { last = now; return; }
@@ -609,10 +597,8 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
       camera.position.copy(want); camera.lookAt(look); lastLook.copy(look);
       applyPower();
       projectHotspots();
-      renderScene(dt, moving); sharp = !moving;
-    } else if (!sharp) { renderScene(dt); sharp = true; } // la caméra vient de s'arrêter : image nette
-    else if (now - lastPresent < 32) return;
-    lastPresent = now; present(now);
+      renderScene(dt);
+    }
   }
 
   (async () => {
@@ -637,7 +623,7 @@ export function createStage(canvas, { edition: startEdition, onReady, onHotspots
     hover(name) { extHover = name; },
     onClick(fn) { clickFn = fn; },
     onInteract(fn) { interactFn = fn; },
-    dispose() { running = false; pmrem.dispose(); sceneRT.dispose(); outRT.dispose(); sceneLo.dispose(); outLo.dispose(); bloom.dispose(); output.dispose(); lensQuad.dispose(); lens.dispose(); renderer.dispose(); },
+    dispose() { running = false; pmrem.dispose(); sceneRT.dispose(); outRT.dispose(); bloom.dispose(); output.dispose(); lensQuad.dispose(); lens.dispose(); renderer.dispose(); },
     get edition() { return edition; },
   };
 }
