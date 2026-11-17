@@ -149,12 +149,20 @@ const filters = $$('.pill--filter');
 cards.forEach((c) => { c._col = cols.indexOf(c.parentElement); c._row = [...c.parentElement.children].indexOf(c); });
 const reading = [...cards].sort((a, b) => a._row - b._row || a._col - b._col);
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const colCount = () => getComputedStyle(grid).gridTemplateColumns.split(' ').filter(Boolean).length;
-let lastCols = colCount();
+// Nombre de colonnes réellement rendues. Tant que la grille n'est pas mise en page
+// (feuille de style pas encore appliquée, cas observé sur Safari au rechargement),
+// la valeur calculée vaut « none » ou « repeat(...) » au lieu d'une liste de largeurs
+// en px : on renvoie alors null pour ne pas tout empiler dans une seule colonne.
+const colCount = () => {
+  const t = getComputedStyle(grid).gridTemplateColumns;
+  return /^[\d.]+px( [\d.]+px)*$/.test(t) ? t.split(' ').length : null;
+};
+let lastCols = cols.length; // le HTML arrive déjà réparti sur toutes les colonnes
 
 function layoutGallery(animate) {
   const on = filters.filter((f) => f.classList.contains('is-on')).map((f) => f.dataset.filter);
-  const n = Math.min(colCount(), cols.length);
+  const n = Math.min(colCount() || lastCols, cols.length);
+  lastCols = n;
   const shown = reading.filter((c) => !on.length || c.dataset.type.split(' ').some((t) => on.includes(t)));
   cards.forEach((c) => { c.classList.toggle('is-hidden', !shown.includes(c)); c.classList.remove('is-entering'); });
   if (!on.length && n === cols.length) {
@@ -183,8 +191,14 @@ filters.forEach((f) => f.addEventListener('click', () => {
   grid.classList.add('is-switching');
   switching = setTimeout(() => { layoutGallery(true); grid.classList.remove('is-switching'); }, 200);
 }));
-addEventListener('resize', () => { const n = colCount(); if (n !== lastCols) { lastCols = n; layoutGallery(false); } });
-if (lastCols !== cols.length) layoutGallery(false);
+// Recalée dès que la largeur de la grille change (premier rendu, chargement de la CSS
+// ou des polices, redimensionnement) plutôt que sur une mesure unique au démarrage.
+const syncCols = () => { const n = colCount(); if (n && n !== lastCols) layoutGallery(false); };
+new ResizeObserver(syncCols).observe(grid);
+addEventListener('resize', syncCols);
+addEventListener('load', syncCols);
+addEventListener('pageshow', syncCols);
+syncCols();
 
 /* ---------- FAQ ---------- */
 const items = $$('.acc__item');
