@@ -32,6 +32,7 @@ Intervenants : `{ name, role, city?, photo? }`. Quand tous les intervenants d’
 - `src/stage/editions.js` : données par édition
 - `src/slider.js` : carrousel des cartes de la galerie (voir ci-dessous)
 - `legal/*.html` : pages légales (mentions légales, politique de confidentialité, politique des cookies), reliées depuis le footer ; textes repris des pages Celltrion de « Controverses en Rétine ». Mise en page Figma : pages « Page légale — … » de la page MAQUETTES. Script : `src/legal.js` (bandeau, sommaire qui suit la lecture)
+- `src/smooth.js` : défilement doux léger (Lenis, `lerp` 0,12) sur toutes les pages, liens `#ancre` animés (respectent `scroll-margin` / `scroll-padding`) ; coupé si « réduire les animations », tactile natif. Zones à défilement propre : attribut `data-lenis-prevent`
 - `src/style.css` : tokens Figma (couleurs, rayons, typo TT Fors → fallback sans-serif)
 - `public/assets/` : images/SVG exportés de Figma
 
