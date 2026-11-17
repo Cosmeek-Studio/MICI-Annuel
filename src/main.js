@@ -5,6 +5,7 @@ import '@fontsource/space-grotesk/700.css';
 import { EDITIONS, DEFAULT_EDITION } from './stage/editions.js';
 import { initSliders } from './slider.js';
 import { mountPlayer } from './player.js';
+import { scrollToTop } from './smooth.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -13,7 +14,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const ticker = $('#ticker');
 // bandeau fermé : la nav et la page remontent d'autant
 $('#tickerClose').addEventListener('click', () => { ticker.classList.add('is-hidden'); document.documentElement.classList.add('no-ticker'); });
-$('#navLogo').addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); closeAll(); });
+$('#navLogo').addEventListener('click', (e) => { e.preventDefault(); scrollToTop(); closeAll(); });
 
 /* ---------- Hero 3D ---------- */
 const canvas = $('#stage3d');
